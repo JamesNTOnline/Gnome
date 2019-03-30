@@ -1,0 +1,22 @@
+{
+  "name": "db",
+  "version": "0.0.1",
+  "description": "discord moderation bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheRealJim/Dankbot.git"
+  },
+  "author": "jim",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheRealJim/Dankbot/issues"
+  },
+  "homepage": "https://github.com/TheRealJim/Dankbot#readme",
+  "dependencies": {
+    "discord.js": "^11.4.2"
+  }
+}
