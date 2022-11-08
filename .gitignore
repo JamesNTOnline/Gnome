@@ -84,6 +84,7 @@ typings/
 .dynamodb/
 
 # Config files
+notes.md
 botconfig.json
 .env
 node_modules
