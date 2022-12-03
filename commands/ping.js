@@ -7,6 +7,6 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         .setName('ping')
         .setDescription('Replies to let you know the bot is active'),
     async execute(interaction){
-        await interaction.reply('Tea\'s a gimp');
+        await interaction.reply('I am ready to work!');
     },
 };

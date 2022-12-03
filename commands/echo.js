@@ -4,9 +4,9 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: new SlashCommandBuilder()
-        .setName('ping')
-        .setDescription('Replies to let you know the bot is active'),
+        .setName('echo')
+        .setDescription('Repeats a phrase back to you'),
     async execute(interaction){
-        await interaction.reply('Tea\'s a gimp');
+        await interaction.reply('Placeholder');
     },
 };

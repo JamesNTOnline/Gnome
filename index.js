@@ -1,17 +1,7 @@
-/**
-destructuring a const called Client from the object returned
-by the require() statement.
 
-In other words: require returns something from the discord.js module
-The token const is then destructured:
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
-
-const{a, b} = obj is equivalent to const a = obj.a, const b = obj.b
-require() allows access to files, packages, etc.
-and should be done a the top of the file.
-*/
-const fs =  require('node:fs'); //locating command files
-const path = require('node:path');
+//best practice? use const. change to let or var if needed
+const fs =  require('node:fs'); //filesystem module
+const path = require('node:path'); //path module
 const {Client, Events, Collection, GatewayIntentBits} = require('discord.js');
 const {token} = require('./botconfig.json');
 
@@ -25,15 +15,20 @@ const client = new Client({
 	],
 });
 
-client.commands = new Collection(); //extends Map - O(1) runtime
+
+/*
+get the path to the commands folder
+read the path and return the .js files as an array ['ban.js', 'echo.js'...]
+can then build the client's command list which can be used by other files
+*/
 const commandsPath = path.join(__dirname, 'commands');
-//returns array of filenames, filter() removes any non .js files
 const commandFiles = fs.readdirSync(commandsPath).filter(file=>file.endsWith('.js'));
+client.commands = new Collection(); //extends Map - O(1) TC
 //loop over the file array and get the path to the commands
 for (const file of commandFiles){
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
-//new item K:V pair name:exported module
+    const fp = path.join(commandsPath, file);
+    const command = require(fp);
+//K:V pair name:exported module
 if('data' in command && 'execute' in command){ //checking the command does something
     client.commands.set(command.data.name, command); //add to the array
 } else {
@@ -41,32 +36,29 @@ if('data' in command && 'execute' in command){ //checking the command does somet
     }
 }
 
-//handles execution of commands using the execute() function in a command file
-client.on(Events.InteractionCreate, async interaction =>{
-    if(!interaction.isChatInputCommand()) return;
-    //match the command to the client's list of commands stored above
-    const command = interaction.client.commands.get(interaction.commandName);
-    if(!command){ //no match, error
-        console.error(`No command matching ${interaction.commandName} found!`);
-    }
-    try { //try to execute the command using execute method
-        await command.execute(interaction);
-    } catch (error){ //catch any errors caused during runtime and report
-        console.error(error);
-        await interaction.reply({content: 'Error while executing command', ephemeral: true});
-    }
-});
 
-// when client ready, run this once
-// 'c' s event parameter to keep it separate from the 'client'
-client.once(Events.ClientReady, c =>{
-    console.log(`Ready! Logged in as ${c.user.tag}`);
-    c.user.setPresence({ activities: [{ name: 'Copying articles from Wikipedia' }],
-    status: 'idle' });
-});
+/*
+get the path to the event handler folder (events) and get the array of js files
+handle each type of event (for now, there are .once and regular interactions)
+*/
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file=>file.endsWith('.js'));
+for (const file of eventFiles){
+    const fp = path.join(eventFiles, file);
+    const event = require(fp);
+    /*(...args) - variable # of arguments. with slash commands arguments may have
+    different options, or none. collects args into an array
+    the iterable is given to the function and expanded depending on expected arguments
+    */
+    client.once(event.name, (...args)=>event.execute(...args));
+    if(event.once){
+    } else {
+        client.on(event.name, (...args)=> event.execute(...args));
+    }
+}
 
 //TODO:
 // Have avatar automatically update its avatar for time of year
 
-// log into discord with  client token
+// log into discord with client token
 client.login(token);
