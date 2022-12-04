@@ -1,3 +1,7 @@
+/*
+Write new commands which output information pertaining to some entity (server, channel, user) here
+Example commands might include /info user which returns the name and join date of a mentioned person
+*/
 
 
 const { SlashCommandBuilder } = require('discord.js');
@@ -6,9 +10,9 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: new SlashCommandBuilder()
-        .setName('ping')
-        .setDescription('Replies to let you know the bot is active'),
+        .setName('ph')
+        .setDescription('ph'),
     async execute(interaction){
-        await interaction.reply('I am ready to work!');
+        await interaction.reply('ph');
     },
 };
