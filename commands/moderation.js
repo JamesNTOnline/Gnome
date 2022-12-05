@@ -21,39 +21,62 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
         .setDescription('Moderation commands') //note: even though this is invisible to the user, it is required by command.tojson
-        //Kick Command - removes a single user from the server
+        //KICK Command - removes a single user from the server
         .addSubcommand(subcommand =>
             subcommand
                 .setName('kick')
                 .setDescription('Kicks a user from the server.')
                 //a user option pops up a list of users, only 1 should be entered and manipulated
-                .addUserOption(option => 
+                .addUserOption(option =>
                     option.setName('target')
-                    .setDescription('User to remove')
-                    .setRequired(true)))
+                        .setDescription('Mention or ID of user to remove')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('The behaviour the user is being banned for')
+                        .setMaxLength(512)))
 
-        //Masskick Command - used to purge multiple users at a time
+        //MASSKICK Command - used to purge multiple users at a time
         .addSubcommand(subcommand =>
             subcommand
                 .setName('masskick')
                 .setDescription('Kicks multiple users from the server at once.')
                 //a string option will allow all inputs. these need to be resolved appropriately
-                .addStringOption(option =>
+                .addMentionableOption(option =>
                     option.setName('targets')
-                        .setDescription('User to remove')
+                        .setDescription('Users to remove, by @mention or ID, separated by a space')
                         .setRequired(true)))
 
-        //Ban Command - remove a single user from the server permanently
+        /*
+        BAN Command - remove a single user from the server permanently
+        Required: target; Optional: delete history, reason
+        History goes up to 7 days
+        */
         .addSubcommand(subcommand =>
             subcommand
                 .setName('ban')
                 .setDescription('Bans a user')
                 .addUserOption(option =>
                     option.setName('target')
-                        .setDescription('User to remove')
-                        .setRequired(true)))
+                        .setDescription('Mention or ID of user to ban')
+                        .setRequired(true))
+                .addIntegerOption(option =>
+                    option.setName('delete')
+                        .setDescription('How much of the message history to delete')
+                        .addChoices(
+                        //0, 6, 12, 24, 72, 168 breakpoints in hours; value is in seconds
+                            { name: 'Don\'t delete any', value: 0 },
+                            { name: 'Last day', value: 86400 },
+                            { name: 'Last 3 days', value: 259200 },
+                            { name: 'Last 7 days', value: 604800 }
+                        ))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('The behaviour the user is being banned for')
+                        .setMaxLength(512)))
 
-        //Masskick Command - used to purge multiple users at a time
+
+        //TEMPBAN Command - used to purge multiple users at a time
         .addSubcommand(subcommand =>
             subcommand
                 .setName('tempban')
@@ -64,7 +87,7 @@ module.exports = {
                         .setDescription('User to remove')
                         .setRequired(true)))
 
-        //Masskick Command - used to purge multiple users at a time
+        //SOFTBAN Command - used to purge multiple users at a time
         .addSubcommand(subcommand =>
             subcommand
                 .setName('softban')

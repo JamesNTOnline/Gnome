@@ -17,7 +17,7 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: new SlashCommandBuilder()
-        .setName('ph')
+        .setName('cleanup')
         .setDescription('ph'),
     async execute(interaction){
         await interaction.reply('ph');
