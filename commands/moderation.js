@@ -15,18 +15,36 @@ HOW TO READ COMMAND FILES:
 
 // see: https://discordjs.guide/slash-commands/advanced-creation.html#option-types for the allowed input types
 
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require('discord.js');
 
+
+/**
+ * use to add a single target user subcommand to a given command (i.e. kick)
+ * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - object to add options/subcommands to
+ */
+function addTargetUserOption(builder) {
+    return builder
+        .addUserOption(option =>
+            option.setName('target')
+                .setDescription('Mention or ID or user to remove')
+                .setRequired(true))
+}
+
+//can this be refactored?
+//https://github.com/Markkop/corvo-astral/tree/master/src/commands
+//get the slash command builder and split things up as above
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
         .setDescription('Moderation commands') //note: even though this is invisible to the user, it is required by command.tojson
-        //KICK Command - removes a single user from the server
+
+        /*KICK - removes a single user from the server
+        Required: target; Optional: reason*/
         .addSubcommand(subcommand =>
             subcommand
                 .setName('kick')
                 .setDescription('Kicks a user from the server.')
-                //a user option pops up a list of users, only 1 should be entered and manipulated
+                //a user option pops up a list of users
                 .addUserOption(option =>
                     option.setName('target')
                         .setDescription('Mention or ID of user to remove')
@@ -36,22 +54,20 @@ module.exports = {
                         .setDescription('The behaviour the user is being banned for')
                         .setMaxLength(512)))
 
-        //MASSKICK Command - used to purge multiple users at a time
+        /*MASSKICK - used to purge multiple users at a time
+        Required: a target list.
+        This must be a String as Mentionable and User would only let us access one object*/
         .addSubcommand(subcommand =>
             subcommand
                 .setName('masskick')
                 .setDescription('Kicks multiple users from the server at once.')
-                //a string option will allow all inputs. these need to be resolved appropriately
-                .addMentionableOption(option =>
+                .addStringOption(option =>
                     option.setName('targets')
                         .setDescription('Users to remove, by @mention or ID, separated by a space')
                         .setRequired(true)))
 
-        /*
-        BAN Command - remove a single user from the server permanently
-        Required: target; Optional: delete history, reason
-        History goes up to 7 days
-        */
+        /* BAN - remove a single user from the server permanently
+        Required: target; Optional: delete history (up to 7 days in secs), reason*/
         .addSubcommand(subcommand =>
             subcommand
                 .setName('ban')
@@ -64,7 +80,7 @@ module.exports = {
                     option.setName('delete')
                         .setDescription('How much of the message history to delete')
                         .addChoices(
-                        //0, 6, 12, 24, 72, 168 breakpoints in hours; value is in seconds
+                            //0, 6, 12, 24, 72, 168 hrs in seconds
                             { name: 'Don\'t delete any', value: 0 },
                             { name: 'Last day', value: 86400 },
                             { name: 'Last 3 days', value: 259200 },
@@ -76,18 +92,37 @@ module.exports = {
                         .setMaxLength(512)))
 
 
-        //TEMPBAN Command - used to purge multiple users at a time
+        //TEMPBAN Command - Bans a user for a specified amount of time
         .addSubcommand(subcommand =>
             subcommand
                 .setName('tempban')
-                .setDescription('Kicks multiple users from the server at once.')
+                .setDescription('Bans a user for a specified amount of time [NYI]')
                 //a string option will allow all inputs. these need to be resolved appropriately
                 .addStringOption(option =>
-                    option.setName('targets')
+                    option.setName('target')
                         .setDescription('User to remove')
-                        .setRequired(true)))
+                        .setRequired(true))
+                .addIntegerOption(option =>
+                    option.setName('delete')
+                        .setDescription('How much of the message history to delete')
+                        .addChoices(
+                            //0, 6, 12, 24, 72, 168 hrs in seconds
+                            { name: 'Don\'t delete any', value: 0 },
+                            { name: 'Last day', value: 86400 },
+                            { name: 'Last 3 days', value: 259200 },
+                            { name: 'Last 7 days', value: 604800 }
+                        ))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('The behaviour the user is being banned for')
+                        .setMaxLength(512))
+                .addIntegerOption(option=>
+                    option.setName('duration')
+                    .setDescription('How long the user should stay banned for')
+                    .setRequired(true)))
 
-        //SOFTBAN Command - used to purge multiple users at a time
+
+        //SOFTBAN Command - Bans and unbans a member to purge messages
         .addSubcommand(subcommand =>
             subcommand
                 .setName('softban')
