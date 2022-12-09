@@ -163,7 +163,6 @@ module.exports = {
                  * TODO: Check user has kick permissions
                  * TODO: check user is not kicking themselves
                  */
-                console.log('Before target.kick()');
                 await target.kick(kickReason)
                 .then(() => {
                   console.log('Kick successful');
