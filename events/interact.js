@@ -13,7 +13,7 @@ module.exports = {
             await command.execute(interaction);
         } catch (error){ //catch any errors caused during runtime and report
             console.error(error);
-            await interaction.reply({content: 'Error while executing command', ephemeral: true});
+            console.error('Error while executing command');
         }
     }
 };

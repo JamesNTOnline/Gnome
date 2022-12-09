@@ -51,8 +51,8 @@ for (const file of eventsFiles){
     different options, or none. collects args into an array
     the iterable is given to the function and expanded depending on expected arguments
     */
-    client.once(event.name, (...args)=>event.execute(...args));
     if(event.once){
+        client.once(event.name, (...args)=>event.execute(...args));
     } else {
         client.on(event.name, (...args)=> event.execute(...args));
     }
