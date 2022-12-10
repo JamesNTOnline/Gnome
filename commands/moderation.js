@@ -29,9 +29,60 @@ function addTargetUserOption(builder) {
         .addUserOption(option =>
             option.setName('target')
                 .setDescription('Mention or ID or user to remove')
-                .setRequired(true))
-}
+                .setRequired(true));
+};
 
+/**
+ * adds a String option to a command builder representing the reason a user is being removed
+ * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add the option to
+ */
+function addReasonOption(builder, isrequired) {
+    return builder
+        .addStringOption(option =>
+            option.setName('reason')
+                .setDescription('The behaviour the user is being punished for')
+                .setMaxLength(512)
+                .setRequired(isrequired));
+};
+
+/**
+ * Adds an Integer option to a command builder representing the amount of messages to delete
+ * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder 
+ */
+function addDeleteOption(builder) {
+    return builder
+        .addIntegerOption(option =>
+            option.setName('delete')
+                .setDescription('Number of days worth of messages to purge')
+                .addChoices(
+                    //0, 6, 12, 24, 72, 168 hrs in seconds
+                    { name: 'Don\'t delete any', value: 0 },
+                    { name: 'Last day', value: 86400 },
+                    { name: 'Last 3 days', value: 259200 },
+                    { name: 'Last 7 days', value: 604800 }
+                ));
+};
+
+/**
+ * 
+ * @param {*} name - the name of the subcommand
+ * @param {*} desc - the description for what the subcommand does
+ * @returns a subcommand builder object, representing a subcommand. this needs to be added onto a command builder object
+ */
+function buildSubCommand(name, desc) {
+    let subc = new SlashCommandSubcommandBuilder()
+        .setName(name)
+        .setDescription(desc);
+    subc = addTargetUserOption(subc);
+    subc = addReasonOption(subc);
+    return subc;
+};
+
+const kick = buildSubCommand('kick', 'Kicks a user from the server.');
+// special case! const masskick
+const ban = buildSubCommand('ban', 'Bans a user from the server.');
+const tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].');
+const softban = buildSubCommand('softban', 'Quickly bans and unbans a user; deletes a day\'s worth of messages.');
 //can this be refactored?
 //https://github.com/Markkop/corvo-astral/tree/master/src/commands
 //get the slash command builder and split things up as above
@@ -42,19 +93,7 @@ module.exports = {
 
         /*KICK - removes a single user from the server
         Required: target; Optional: reason*/
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('kick')
-                .setDescription('Kicks a user from the server.')
-                //a user option pops up a list of users
-                .addUserOption(option =>
-                    option.setName('target')
-                        .setDescription('Mention or ID of user to remove')
-                        .setRequired(true))
-                .addStringOption(option =>
-                    option.setName('reason')
-                        .setDescription('The behaviour the user is being banned for')
-                        .setMaxLength(512)))
+        .addSubcommand(kick)
 
         /*MASSKICK - used to purge multiple users at a time
         Required: a target list.
@@ -164,15 +203,15 @@ module.exports = {
                  * TODO: check user is not kicking themselves
                  */
                 await target.kick(kickReason)
-                .then(() => {
-                  console.log('Kick successful');
-                  interaction.reply({ embeds: [embed] });
-                })
-                .catch(err => {
-                  interaction.deleteReply();
-                  interaction.followUp('something went wrong, user not kicked!');
-                  console.error(err);
-                });
+                    .then(() => {
+                        console.log('Kick successful');
+                        interaction.reply({ embeds: [embed] });
+                    })
+                    .catch(err => {
+                        interaction.deleteReply();
+                        interaction.followUp('something went wrong, user not kicked!');
+                        console.error(err);
+                    });
                 break;
 
 
