@@ -16,7 +16,7 @@ HOW TO READ COMMAND FILES:
 // https://www.codegrepper.com/tpc/avatar+command+discord.js
 // see: https://discordjs.guide/slash-commands/advanced-creation.html#option-types for the allowed input types
 
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, Constants } = require('discord.js');
 const { EmbedBuilder } = require("discord.js");
 
 
@@ -38,10 +38,9 @@ function addTargetUserOption(builder) {
  * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add the option to
  */
 function addReasonOption(builder) {
+    let is_required = false;
     if (builder.name.includes('ban')) { //ban commands should always have a reason
-        let is_required = true;
-    } else {
-        is_required = false;
+        is_required = true;
     }
     return builder
         .addStringOption(option =>
@@ -92,14 +91,15 @@ function buildSubCommand(name, desc) {
 /**
  * Builds the chat embed message (basically, a nice way to display a mod action)
  * @param {*} interaction 
- * @param {String} subc - the name of the subcommand 
+ * @param {String} cmd_name - the name of the subcommand
+ * @param {User} target - a user object representing a guild member
  * @param {String} reason - the reason for the action
  * @returns an embeddable message, this needs to be used in a reply statement to appear in chat
  */
-function buildEmbed(interaction, cmd_name, reason) {
+function buildEmbed(interaction, cmd_name, target, reason) {
     const embed = new EmbedBuilder();
     const name_formatted = cmd_name.charAt(0).toUpperCase() + cmd_name.slice(1);
-    embed.setTitle('~~ ' + name_formatted + ' Report ~~')
+    embed.setTitle('~ ' + name_formatted + ' Report ~')
         .setColor("#e56b00")
         .addFields(
             { name: 'Mod', value: `<@${interaction.user.id}>`, inline: true },
@@ -133,6 +133,8 @@ const tempban = buildSubCommand('tempban', 'Bans a user for a specified amount o
             .setDescription('How long the user should stay banned for')
             .setRequired(true));
 const softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
+
+
 //can this be refactored?
 //https://github.com/Markkop/corvo-astral/tree/master/src/commands
 //get the slash command builder and split things up as above
@@ -165,61 +167,47 @@ module.exports = {
     //Resolve the interaction here - each subcommand requires a different resolution.
     //interaction methods return different things about what happened in the command (i.e. target)
     async execute(interaction) {
-        let subc = interaction.options.getSubcommand(); //name of the called command
-        let embed = new EmbedBuilder();
-        switch (subc) {
-            case 'kick':
-                let target = interaction.options.getMember('target');
-                if (!target) {
-                    interaction.reply('There is no such user');
+        const cmd_name = interaction.options.getSubcommand(); //name of the called command
+        const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator - returns right of ?? when left is null or undefined
+        const target = interaction.options.getMember('target'); //grab the target for the action
+        const embed = buildEmbed(interaction, cmd_name, target, reason)
+        if (target.id == interaction.client.user.id) { //don't let the Gnome do anything to itself
+            interaction.reply('I aint gonna Gnome myself, boss!')
+        } else if (target.id == interaction.user.id) { //don't let the command user do anything to themselves
+            interaction.reply('I can\'t Gnome you - you\'re da boss');
+        } else {
+            switch (cmd_name) {
+                case 'kick':
+                    if (!target) { // if for some reason there's no target, don't do anything
+                        interaction.reply('There is no such user');
+                        break;
+                    }
+                    /* TODO: Check user has kick permissions */
+                    await target.kick(reason)
+                        .then(() => {
+                            console.log('Kick successful');
+                            interaction.reply({ embeds: [embed] });
+                        })
+                        .catch(err => {
+                            interaction.deleteReply();
+                            interaction.followUp('something went wrong, user not kicked!');
+                            console.error(err);
+                        });
                     break;
-                }
-                let kickReason = interaction.options.getString('reason');
-                //building a nice output
-                embed.setTitle("~ You've been Gnomed! ~")
-                    .setColor("#e56b00")
-                    .addFields(
-                        { name: 'Mod', value: `<@${interaction.user.id}>`, inline: true },
-                        { name: 'Kicked', value: `<@${target.id}>`, inline: true },
-                        { name: 'ID', value: `${target.id}`, inline: true },
-                        { name: 'Reason', value: kickReason }
-                    )
-                    .setThumbnail(`${target.displayAvatarURL({ dynamic: true })}`)
-                    .setTimestamp(interaction.createdTimestamp);
-                /**
-                 * TODO: Check user has kick permissions
-                 * TODO: check user is not kicking themselves
-                 */
-                await target.kick(kickReason)
-                    .then(() => {
-                        console.log('Kick successful');
-                        interaction.reply({ embeds: [embed] });
-                    })
-                    .catch(err => {
-                        interaction.deleteReply();
-                        interaction.followUp('something went wrong, user not kicked!');
-                        console.error(err);
-                    });
-                break;
 
-
-            // await interaction.reply({ embeds: [embed] })
-            //   .then(() => interaction.guild.members.kick({ user: target.id, reason: kickReason }))
-            // .catch(error => interaction.editReply("something went wrong, user not kicked!"));
-            // break;
-
-            case 'masskick':
-                await interaction.reply('I am ready to work!');
-                break;
-            case 'ban':
-                user = interaction.options.getUser('target');
-                break;
-            case 'tempban':
-                await interaction.reply('I am ready to work!');
-                break;
-            case 'softban':
-                await interaction.reply('I am ready to work!');
-                break;
+                case 'masskick':
+                    await interaction.reply('I am ready to work!');
+                    break;
+                case 'ban':
+                    user = interaction.options.getUser('target');
+                    break;
+                case 'tempban':
+                    await interaction.reply('I am ready to work!');
+                    break;
+                case 'softban':
+                    await interaction.reply('I am ready to work!');
+                    break;
+            }
         }
     },
 };
