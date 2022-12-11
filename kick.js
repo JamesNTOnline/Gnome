@@ -1,3 +1,88 @@
+
+    /*     /*MASSKICK - used to purge multiple users at a time
+        Required: a target list.
+        This must be a String as Mentionable and User would only let us access one object*/
+/*         .addSubcommand(subcommand =>
+            subcommand
+                .setName('masskick')
+                .setDescription('Kicks multiple users from the server at once.')
+                .addStringOption(option =>
+                    option.setName('targets')
+                        .setDescription('Users to remove, by @mention or ID, separated by a space')
+                        .setRequired(true))), */
+
+        /* BAN - remove a single user from the server permanently
+        Required: target; Optional: delete history (up to 7 days in secs), reason*/
+        /*         .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('ban')
+                        .setDescription('Bans a user')
+                        .addUserOption(option =>
+                            option.setName('target')
+                                .setDescription('Mention or ID of user to ban')
+                                .setRequired(true))
+                        .addIntegerOption(option =>
+                            option.setName('delete')
+                                .setDescription('How much of the message history to delete')
+                                .addChoices(
+                                    //0, 6, 12, 24, 72, 168 hrs in seconds
+                                    { name: 'Don\'t delete any', value: 0 },
+                                    { name: 'Last day', value: 86400 },
+                                    { name: 'Last 3 days', value: 259200 },
+                                    { name: 'Last 7 days', value: 604800 }
+                                ))
+                        .addStringOption(option =>
+                            option.setName('reason')
+                                .setDescription('The behaviour the user is being banned for')
+                                .setMaxLength(512))) */
+
+
+        //TEMPBAN Command - Bans a user for a specified amount of time
+/*         .addSubcommand(subcommand =>
+            subcommand
+                .setName('tempban')
+                .setDescription('Bans a user for a specified amount of time [NYI]')
+                //a string option will allow all inputs. these need to be resolved appropriately
+                .addUserOption(option =>
+                    option.setName('target')
+                        .setDescription('Mention or ID or user to remove')
+                        .setRequired(true))
+                .addIntegerOption(option =>
+                    option.setName('duration')
+                        .setDescription('How long the user should stay banned for')
+                        .setRequired(true))
+                .addIntegerOption(option =>
+                    option.setName('delete')
+                        .setDescription('How much of the message history to delete')
+                        .addChoices(
+                            //0, 6, 12, 24, 72, 168 hrs in seconds
+                            { name: 'Don\'t delete any', value: 0 },
+                            { name: 'Last day', value: 86400 },
+                            { name: 'Last 3 days', value: 259200 },
+                            { name: 'Last 7 days', value: 604800 }
+                        ))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('The behaviour the user is being banned for')
+                        .setMaxLength(512))) */
+
+
+        //SOFTBAN Command - Bans and unbans a member to purge messages
+/*         .addSubcommand(subcommand =>
+            subcommand
+                .setName('softban')
+                .setDescription('Quickly bans and unbans a user; deletes a day\'s worth of messages')
+                //a string option will allow all inputs. these need to be resolved appropriately
+                .addUserOption(option =>
+                    option.setName('target')
+                        .setDescription('Mention or ID or user to remove')
+                        .setRequired(true))), */ 
+
+
+
+/**
+ * OLD KICK JS
+ */
 // // const Discord = require("discord.js");
 // //
 // // module.exports.run = async (bot, message, args) => {

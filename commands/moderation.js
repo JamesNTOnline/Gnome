@@ -30,20 +30,27 @@ function addTargetUserOption(builder) {
             option.setName('target')
                 .setDescription('Mention or ID or user to remove')
                 .setRequired(true));
-};
+}
+
 
 /**
  * adds a String option to a command builder representing the reason a user is being removed
  * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add the option to
  */
-function addReasonOption(builder, isrequired) {
+function addReasonOption(builder) {
+    if (builder.name.includes('ban')) { //ban commands should always have a reason
+        let is_required = true;
+    } else {
+        is_required = false;
+    }
     return builder
         .addStringOption(option =>
             option.setName('reason')
                 .setDescription('The behaviour the user is being punished for')
                 .setMaxLength(512)
-                .setRequired(isrequired));
-};
+                .setRequired(is_required));
+}
+
 
 /**
  * Adds an Integer option to a command builder representing the amount of messages to delete
@@ -61,28 +68,71 @@ function addDeleteOption(builder) {
                     { name: 'Last 3 days', value: 259200 },
                     { name: 'Last 7 days', value: 604800 }
                 ));
-};
+}
+
 
 /**
- * 
- * @param {*} name - the name of the subcommand
- * @param {*} desc - the description for what the subcommand does
+ * @param {String} name - the name of the subcommand
+ * @param {String} desc - the description for what the subcommand does
  * @returns a subcommand builder object, representing a subcommand. this needs to be added onto a command builder object
  */
 function buildSubCommand(name, desc) {
-    let subc = new SlashCommandSubcommandBuilder()
+    let sub_cmd = new SlashCommandSubcommandBuilder()
         .setName(name)
         .setDescription(desc);
-    subc = addTargetUserOption(subc);
-    subc = addReasonOption(subc);
-    return subc;
-};
+    sub_cmd = addTargetUserOption(sub_cmd);
+    sub_cmd = addReasonOption(sub_cmd);
+    if (name.includes('ban') && !name.includes('soft')) {
+        sub_cmd = addDeleteOption(sub_cmd)
+    }
+    return sub_cmd;
+}
 
-const kick = buildSubCommand('kick', 'Kicks a user from the server.');
-// special case! const masskick
+
+/**
+ * Builds the chat embed message (basically, a nice way to display a mod action)
+ * @param {*} interaction 
+ * @param {String} subc - the name of the subcommand 
+ * @param {String} reason - the reason for the action
+ * @returns an embeddable message, this needs to be used in a reply statement to appear in chat
+ */
+function buildEmbed(interaction, cmd_name, reason) {
+    const embed = new EmbedBuilder();
+    const name_formatted = cmd_name.charAt(0).toUpperCase() + cmd_name.slice(1);
+    embed.setTitle('~~ ' + name_formatted + ' Report ~~')
+        .setColor("#e56b00")
+        .addFields(
+            { name: 'Mod', value: `<@${interaction.user.id}>`, inline: true },
+            { name: 'User', value: `<@${target.id}>`, inline: true },
+            { name: 'ID', value: `${target.id}`, inline: true },
+            { name: 'Reason', value: reason }
+        )
+        .setThumbnail(`${target.displayAvatarURL({ dynamic: true })}`)
+        .setTimestamp(interaction.createdTimestamp);
+    return embed;
+}
+
+
+
+/*KICK - removes a single user from the server
+Required: target; Optional: reason*/
+const kick = buildSubCommand('kick', 'Kicks a user from the server.', true);
+
+/*MASSKICK - used to purge multiple users at a time
+Required: a target list. This must be a String as Mentionable and User would only let us access one object*/
+const masskick = buildSubCommand('masskick', 'Kicks multiple users from the server.');
+
+/* BAN - remove a single user from the server permanently
+Required: target; Optional: delete history (up to 7 days in secs), reason*/
 const ban = buildSubCommand('ban', 'Bans a user from the server.');
-const tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].');
-const softban = buildSubCommand('softban', 'Quickly bans and unbans a user; deletes a day\'s worth of messages.');
+
+//TEMPBAN Command - Bans a user for a specified amount of time
+const tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].')
+    .addIntegerOption(option =>
+        option.setName('duration')
+            .setDescription('How long the user should stay banned for')
+            .setRequired(true));
+const softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
 //can this be refactored?
 //https://github.com/Markkop/corvo-astral/tree/master/src/commands
 //get the slash command builder and split things up as above
@@ -90,14 +140,11 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
         .setDescription('Moderation commands') //note: even though this is invisible to the user, it is required by command.tojson
-
-        /*KICK - removes a single user from the server
-        Required: target; Optional: reason*/
         .addSubcommand(kick)
+        .addSubcommand(ban)
+        .addSubcommand(tempban)
+        .addSubcommand(softban)
 
-        /*MASSKICK - used to purge multiple users at a time
-        Required: a target list.
-        This must be a String as Mentionable and User would only let us access one object*/
         .addSubcommand(subcommand =>
             subcommand
                 .setName('masskick')
@@ -105,74 +152,15 @@ module.exports = {
                 .addStringOption(option =>
                     option.setName('targets')
                         .setDescription('Users to remove, by @mention or ID, separated by a space')
-                        .setRequired(true)))
-
-        /* BAN - remove a single user from the server permanently
-        Required: target; Optional: delete history (up to 7 days in secs), reason*/
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('ban')
-                .setDescription('Bans a user')
-                .addUserOption(option =>
-                    option.setName('target')
-                        .setDescription('Mention or ID of user to ban')
-                        .setRequired(true))
-                .addIntegerOption(option =>
-                    option.setName('delete')
-                        .setDescription('How much of the message history to delete')
-                        .addChoices(
-                            //0, 6, 12, 24, 72, 168 hrs in seconds
-                            { name: 'Don\'t delete any', value: 0 },
-                            { name: 'Last day', value: 86400 },
-                            { name: 'Last 3 days', value: 259200 },
-                            { name: 'Last 7 days', value: 604800 }
-                        ))
-                .addStringOption(option =>
-                    option.setName('reason')
-                        .setDescription('The behaviour the user is being banned for')
-                        .setMaxLength(512)))
-
-
-        //TEMPBAN Command - Bans a user for a specified amount of time
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('tempban')
-                .setDescription('Bans a user for a specified amount of time [NYI]')
-                //a string option will allow all inputs. these need to be resolved appropriately
-                .addUserOption(option =>
-                    option.setName('target')
-                        .setDescription('Mention or ID or user to remove')
-                        .setRequired(true))
-                .addIntegerOption(option =>
-                    option.setName('duration')
-                        .setDescription('How long the user should stay banned for')
-                        .setRequired(true))
-                .addIntegerOption(option =>
-                    option.setName('delete')
-                        .setDescription('How much of the message history to delete')
-                        .addChoices(
-                            //0, 6, 12, 24, 72, 168 hrs in seconds
-                            { name: 'Don\'t delete any', value: 0 },
-                            { name: 'Last day', value: 86400 },
-                            { name: 'Last 3 days', value: 259200 },
-                            { name: 'Last 7 days', value: 604800 }
-                        ))
-                .addStringOption(option =>
-                    option.setName('reason')
-                        .setDescription('The behaviour the user is being banned for')
-                        .setMaxLength(512)))
-
-
-        //SOFTBAN Command - Bans and unbans a member to purge messages
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('softban')
-                .setDescription('Quickly bans and unbans a user; deletes a day\'s worth of messages')
-                //a string option will allow all inputs. these need to be resolved appropriately
-                .addUserOption(option =>
-                    option.setName('target')
-                        .setDescription('Mention or ID or user to remove')
                         .setRequired(true))),
+
+    /* BAN - remove a single user from the server permanently
+    Required: target; Optional: delete history (up to 7 days in secs), reason*/
+
+    //TEMPBAN Command - Bans a user for a specified amount of time
+
+
+    //SOFTBAN Command - Bans and unbans a member to purge messages
 
     //Resolve the interaction here - each subcommand requires a different resolution.
     //interaction methods return different things about what happened in the command (i.e. target)
