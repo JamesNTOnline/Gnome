@@ -135,13 +135,11 @@ const tempban = buildSubCommand('tempban', 'Bans a user for a specified amount o
 const softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
 
 
-//can this be refactored?
-//https://github.com/Markkop/corvo-astral/tree/master/src/commands
-//get the slash command builder and split things up as above
+//exporting a slashcommandbuilder object. this object needs to have a name and description, and subcommands
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
-        .setDescription('Moderation commands') //note: even though this is invisible to the user, it is required by command.tojson
+        .setDescription('Moderation commands') //note: even though this is invisible to the user, it is *required* by command.tojson
         .addSubcommand(kick)
         .addSubcommand(ban)
         .addSubcommand(tempban)
@@ -155,14 +153,6 @@ module.exports = {
                     option.setName('targets')
                         .setDescription('Users to remove, by @mention or ID, separated by a space')
                         .setRequired(true))),
-
-    /* BAN - remove a single user from the server permanently
-    Required: target; Optional: delete history (up to 7 days in secs), reason*/
-
-    //TEMPBAN Command - Bans a user for a specified amount of time
-
-
-    //SOFTBAN Command - Bans and unbans a member to purge messages
 
     //Resolve the interaction here - each subcommand requires a different resolution.
     //interaction methods return different things about what happened in the command (i.e. target)
@@ -182,7 +172,7 @@ module.exports = {
                         interaction.reply('There is no such user');
                         break;
                     }
-                    /* TODO: Check user has kick permissions */
+                    /* TODO: Check user has kick permissions*/
                     await target.kick(reason)
                         .then(() => {
                             console.log('Kick successful');

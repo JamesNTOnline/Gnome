@@ -84,6 +84,7 @@ typings/
 .dynamodb/
 
 # Config files
+deprecated_code.js
 notes.md
 botconfig.json
 .env
