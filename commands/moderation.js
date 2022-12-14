@@ -28,32 +28,14 @@ function addTargetUserOption(builder) {
     return builder
         .addUserOption(option =>
             option.setName('target')
-                .setDescription('Mention or ID or user to remove')
+                .setDescription('Mention or ID of user to remove')
                 .setRequired(true));
 }
 
 
 /**
- * adds a String option to a command builder representing the reason a user is being removed
- * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add the option to
- */
-function addReasonOption(builder) {
-    let is_required = false;
-    if (builder.name.includes('ban')) { //ban commands should always have a reason
-        is_required = true;
-    }
-    return builder
-        .addStringOption(option =>
-            option.setName('reason')
-                .setDescription('The behaviour the user is being punished for')
-                .setMaxLength(512)
-                .setRequired(is_required));
-}
-
-
-/**
  * Adds an Integer option to a command builder representing the amount of messages to delete
- * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder 
+ * @param {SlashCommandBuilder, SlashCommandSubcommandBuilder} builder 
  */
 function addDeleteOption(builder) {
     return builder
@@ -69,11 +51,33 @@ function addDeleteOption(builder) {
                 ));
 }
 
-
 /**
+ * adds a String option to a command builder representing the reason a user is being removed
+ * @param {SlashCommandBuilder, SlashCommandSubcommandBuilder} builder - builder object to add the option to
+ */
+function addReasonOption(builder) {
+    let is_required = false;
+    if (builder.name.includes('ban')) { //ban commands should always have a reason (why? they have permanent effects)
+        is_required = true;
+    }
+    return builder
+        .addStringOption(option =>
+            option.setName('reason')
+                .setDescription('The behaviour the user is being punished for')
+                .setMaxLength(512)
+                .setRequired(is_required));
+}
+
+
+/** 
  * @param {String} name - the name of the subcommand
  * @param {String} desc - the description for what the subcommand does
  * @returns a subcommand builder object, representing a subcommand. this needs to be added onto a command builder object
+ * TODO: refactor with above
+ * ALL REQUIRED COMMANDS MUST COME BEFORE OPTIONALS
+ * Ban/Softban: TARGET, REASON > DELETE
+ * Kick/Masskick: TARGET, REASON
+ * Tempban: TARGET, REASON, DURATION > DELETE
  */
 function buildSubCommand(name, desc) {
     let sub_cmd = new SlashCommandSubcommandBuilder()
@@ -81,6 +85,12 @@ function buildSubCommand(name, desc) {
         .setDescription(desc);
     sub_cmd = addTargetUserOption(sub_cmd);
     sub_cmd = addReasonOption(sub_cmd);
+    if(name.includes('temp')){
+        sub_cmd.addIntegerOption(option =>
+            option.setName('duration')
+                .setDescription('How long the user should stay banned for')
+                .setRequired(true));
+    }
     if (name.includes('ban') && !name.includes('soft')) {
         sub_cmd = addDeleteOption(sub_cmd)
     }
@@ -113,26 +123,34 @@ function buildEmbed(interaction, cmd_name, target, reason) {
 }
 
 
+/*
+KICK - removes a single user from the server
+Required: target; Optional: reason
+*/
+let kick = buildSubCommand('kick', 'Kicks a user from the server.');
 
-/*KICK - removes a single user from the server
-Required: target; Optional: reason*/
-const kick = buildSubCommand('kick', 'Kicks a user from the server.', true);
+/*
+MASSKICK - used to purge multiple users at a time
+Required: a target list. This must be a String as Mentionable and User would only let us access one object
+*/
+let masskick = buildSubCommand('masskick', 'Kicks multiple users from the server.');
 
-/*MASSKICK - used to purge multiple users at a time
-Required: a target list. This must be a String as Mentionable and User would only let us access one object*/
-const masskick = buildSubCommand('masskick', 'Kicks multiple users from the server.');
+/* 
+BAN - remove a single user from the server permanently
+Required: target; Optional: delete history (up to 7 days in secs), reason
+*/
+let ban = buildSubCommand('ban', 'Bans a user from the server.');
 
-/* BAN - remove a single user from the server permanently
-Required: target; Optional: delete history (up to 7 days in secs), reason*/
-const ban = buildSubCommand('ban', 'Bans a user from the server.');
+/*
+TEMPBAN Command - Bans a user for a specified amount of time
+Required: target, duration; Optional; delete history, reason
+*/
+let tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].');
 
-//TEMPBAN Command - Bans a user for a specified amount of time
-const tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].')
-    .addIntegerOption(option =>
-        option.setName('duration')
-            .setDescription('How long the user should stay banned for')
-            .setRequired(true));
-const softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
+/*
+
+*/
+let softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
 
 
 //exporting a slashcommandbuilder object. this object needs to have a name and description, and subcommands
@@ -144,7 +162,6 @@ module.exports = {
         .addSubcommand(ban)
         .addSubcommand(tempban)
         .addSubcommand(softban)
-
         .addSubcommand(subcommand =>
             subcommand
                 .setName('masskick')
@@ -158,14 +175,24 @@ module.exports = {
     //interaction methods return different things about what happened in the command (i.e. target)
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand(); //name of the called command
-        const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator - returns right of ?? when left is null or undefined
-        const target = interaction.options.getMember('target'); //grab the target for the action
-        const embed = buildEmbed(interaction, cmd_name, target, reason)
+        const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator
+        const target = interaction.options.getMember('target') ?? interaction.options.getString('targets'); //grab the target for the action
+        if (typeof target === 'string') {
+            const re = /(?:\d+\.)?\d+/g; //regex all non-digit characters
+            let target_ids = target.match(re); //array of target IDs
+            console.log(target_ids);
+        }
+        if (!cmd_name.includes('masskick')) { //for a masskick we don't want this type of embed
+            const embed = buildEmbed(interaction, cmd_name, target, reason);
+        }
         if (target.id == interaction.client.user.id) { //don't let the Gnome do anything to itself
-            interaction.reply('I aint gonna Gnome myself, boss!')
+            interaction.reply('I aint gonna Gnome myself, boss!');
         } else if (target.id == interaction.user.id) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t Gnome you - you\'re da boss');
         } else {
+
+
+
             switch (cmd_name) {
                 case 'kick':
                     if (!target) { // if for some reason there's no target, don't do anything
@@ -186,14 +213,17 @@ module.exports = {
                     break;
 
                 case 'masskick':
-                    await interaction.reply('I am ready to work!');
+                    await interaction.reply(target);
                     break;
+
                 case 'ban':
-                    user = interaction.options.getUser('target');
+                    console.log(target);
                     break;
+
                 case 'tempban':
                     await interaction.reply('I am ready to work!');
                     break;
+
                 case 'softban':
                     await interaction.reply('I am ready to work!');
                     break;
