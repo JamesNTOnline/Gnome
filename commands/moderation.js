@@ -154,16 +154,16 @@ Required: target; Optional: reason
 let softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
 
 
-//exporting a slashcommandbuilder object. this object needs to have a name and description, and subcommands
+//exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
-        .setDescription('Moderation commands') //note: even though this is invisible to the user, it is *required* by command.tojson
-        .addSubcommand(kick)
+        .setDescription('Moderation commands') 
+        .addSubcommand(kick) //start adding subcommands to the command
         .addSubcommand(ban)
         .addSubcommand(tempban)
         .addSubcommand(softban)
-        .addSubcommand(subcommand =>
+        .addSubcommand(subcommand => //masskick is a unique case (all other commands only target 1 user) so build separately
             subcommand
                 .setName('masskick')
                 .setDescription('Kicks multiple users from the server at once.')
@@ -172,20 +172,19 @@ module.exports = {
                         .setDescription('Users to remove, by @mention or ID, separated by a space')
                         .setRequired(true))),
 
-    //Resolve the interaction here - each subcommand requires a different resolution.
-    //interaction methods return different things about what happened in the command (i.e. target)
+    //Each subcommand requires a different resolution for their options
+    //interaction.options methods return different things about what happened in the command (i.e. target)
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand(); //name of the called command
-        const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator
-        const target = interaction.options.getMember('target') ?? interaction.options.getString('targets'); //grab the target for the action
-        let target_ids = [];
-        if (typeof target === 'string') {
-            const re = /(?:\d+\.)?\d+/g; //regex all non-digit characters
-            target_ids = target.match(re); //array of target IDs
-            //tar_set = new Set(target_ids); 
-            //- NOTE: if accepting a very large list of users (or a role) use a set O(1). For this use-case, array.includes is "fast enough" O(n), very small dataset
+        const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator on reason
+        const target = interaction.options.getMember('target') ?? interaction.options.getString('targets'); //grab the target(s) for the action
+        let target_ids = []; //target might be a string instead of a member  object. Need to put these in an array for processing
+        if (typeof target === 'string') { 
+            const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
+            target_ids = target.match(re); //returns an array with the chars in re stripped out
+            //tar_set = new Set(target_ids); set O(1) faster than array O(n), but using just a small # of items here and includes()
         }
-        if (!cmd_name.includes('mass')) { //for a mass command we don't want this type of embed
+        if (!cmd_name.includes('mass')) { //for a mass command we don't want the default embed
             const embed = buildEmbed(interaction, cmd_name, target, reason);
         }
         /*
