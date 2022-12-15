@@ -148,7 +148,8 @@ Required: target, duration; Optional; delete history, reason
 let tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].');
 
 /*
-
+SOFTBAN Command - Bans an unbans a user to delete their messages
+Required: target; Optional: reason
 */
 let softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
 
@@ -177,22 +178,27 @@ module.exports = {
         const cmd_name = interaction.options.getSubcommand(); //name of the called command
         const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator
         const target = interaction.options.getMember('target') ?? interaction.options.getString('targets'); //grab the target for the action
+        let target_ids = [];
         if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex all non-digit characters
-            let target_ids = target.match(re); //array of target IDs
-            console.log(target_ids);
+            target_ids = target.match(re); //array of target IDs
+            //tar_set = new Set(target_ids); 
+            //- NOTE: if accepting a very large list of users (or a role) use a set O(1). For this use-case, array.includes is "fast enough" O(n), very small dataset
         }
-        if (!cmd_name.includes('masskick')) { //for a masskick we don't want this type of embed
+        if (!cmd_name.includes('mass')) { //for a mass command we don't want this type of embed
             const embed = buildEmbed(interaction, cmd_name, target, reason);
         }
-        if (target.id == interaction.client.user.id) { //don't let the Gnome do anything to itself
+        /*
+        Don't let the bot touch itself or the command user.
+        Can check whether the member object's id matches or whether the targets array has anything in it matching the client IDs
+        */
+        if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)){
             interaction.reply('I aint gonna Gnome myself, boss!');
-        } else if (target.id == interaction.user.id) { //don't let the command user do anything to themselves
+        } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)){ //don't let the command user do anything to themselves
             interaction.reply('I can\'t Gnome you - you\'re da boss');
         } else {
-
-
-
+        
+        //The command is good and has a legitimate target. Now process them
             switch (cmd_name) {
                 case 'kick':
                     if (!target) { // if for some reason there's no target, don't do anything
