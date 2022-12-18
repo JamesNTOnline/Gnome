@@ -16,7 +16,7 @@ HOW TO READ COMMAND FILES:
 // https://www.codegrepper.com/tpc/avatar+command+discord.js
 // see: https://discordjs.guide/slash-commands/advanced-creation.html#option-types for the allowed input types
 
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, Constants } = require('discord.js');
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const { EmbedBuilder } = require("discord.js");
 
 
@@ -48,7 +48,9 @@ function addDeleteOption(builder) {
                     { name: 'Last day', value: 86400 },
                     { name: 'Last 3 days', value: 259200 },
                     { name: 'Last 7 days', value: 604800 }
-                ));
+                )
+                .setMinValue(604800)
+                .setMaxValue(0));
 }
 
 /**
@@ -82,10 +84,10 @@ function addReasonOption(builder) {
 function buildSubCommand(name, desc) {
     let sub_cmd = new SlashCommandSubcommandBuilder()
         .setName(name)
-        .setDescription(desc);
+        .setDescription(desc)
     sub_cmd = addTargetUserOption(sub_cmd);
     sub_cmd = addReasonOption(sub_cmd);
-    if(name.includes('temp')){
+    if (name.includes('temp')) {
         sub_cmd.addIntegerOption(option =>
             option.setName('duration')
                 .setDescription('How long the user should stay banned for')
@@ -122,43 +124,19 @@ function buildEmbed(interaction, cmd_name, target, reason) {
     return embed;
 }
 
-
-/*
-KICK - removes a single user from the server
-Required: target; Optional: reason
-*/
+//all commands are unavailable in DM
 let kick = buildSubCommand('kick', 'Kicks a user from the server.');
-
-/*
-MASSKICK - used to purge multiple users at a time
-Required: a target list. This must be a String as Mentionable and User would only let us access one object
-*/
 let masskick = buildSubCommand('masskick', 'Kicks multiple users from the server.');
-
-/* 
-BAN - remove a single user from the server permanently
-Required: target; Optional: delete history (up to 7 days in secs), reason
-*/
 let ban = buildSubCommand('ban', 'Bans a user from the server.');
-
-/*
-TEMPBAN Command - Bans a user for a specified amount of time
-Required: target, duration; Optional; delete history, reason
-*/
 let tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].');
-
-/*
-SOFTBAN Command - Bans an unbans a user to delete their messages
-Required: target; Optional: reason
-*/
 let softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
-
 
 //exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
-        .setDescription('Moderation commands') 
+        .setDescription('Moderation commands')
+        .setDMPermission(false) //unavailable in DM
         .addSubcommand(kick) //start adding subcommands to the command
         .addSubcommand(ban)
         .addSubcommand(tempban)
@@ -175,39 +153,38 @@ module.exports = {
     //Each subcommand requires a different resolution for their options
     //interaction.options methods return different things about what happened in the command (i.e. target)
     async execute(interaction) {
-        const cmd_name = interaction.options.getSubcommand(); //name of the called command
-        const reason = interaction.options.getString('reason') ?? 'No reason provided.'; //nullish coalescing operator on reason
-        const target = interaction.options.getMember('target') ?? interaction.options.getString('targets'); //grab the target(s) for the action
+        const cmd_name = interaction.options.getSubcommand();
+        const reason = interaction.options.getString('reason') ?? 'No reason provided.';
+        const target = interaction.options.getMember('target') ?? interaction.options.getString('targets'); //the target(s) for the action member ?? string
+        const delete_days = interaction.options.getInteger('delete') ?? 0;
+        const user_perms = interaction.member.permissions;
         let target_ids = []; //target might be a string instead of a member  object. Need to put these in an array for processing
-        if (typeof target === 'string') { 
+        let embed; //embed is conditionally assigned later but declared here due to block scoping
+        if (!target) { // if for some reason there's no target, don't do anything
+            interaction.reply('You didn\'t tell me who to gnome!');
+        } else if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
             target_ids = target.match(re); //returns an array with the chars in re stripped out
-            //tar_set = new Set(target_ids); set O(1) faster than array O(n), but using just a small # of items here and includes()
+            //tar_set = new Set(target_ids); Set O(1) faster than Array O(n), but using just a small # of items here so negligible
         }
         if (!cmd_name.includes('mass')) { //for a mass command we don't want the default embed
-            const embed = buildEmbed(interaction, cmd_name, target, reason);
+            embed = buildEmbed(interaction, cmd_name, target, reason);
         }
-        /*
-        Don't let the bot touch itself or the command user.
-        Can check whether the member object's id matches or whether the targets array has anything in it matching the client IDs
-        */
-        if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)){
-            interaction.reply('I aint gonna Gnome myself, boss!');
-        } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)){ //don't let the command user do anything to themselves
-            interaction.reply('I can\'t Gnome you - you\'re da boss');
+        //permission check -> don't allow bot to touch itself or the user
+        if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
+            || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
+            interaction.reply('You don\'t have permission for that, naughty!');
+        } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
+            interaction.reply('I aint gonna Gnome myself, blockhead!');
+        } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)) { //don't let the command user do anything to themselves
+            interaction.reply('I can\'t help you Gnome yourself, idiot!');
         } else {
-        
-        //The command is good and has a legitimate target. Now process them
+            //The command is good and has a legitimate target. Now process them
             switch (cmd_name) {
-                case 'kick':
-                    if (!target) { // if for some reason there's no target, don't do anything
-                        interaction.reply('There is no such user');
-                        break;
-                    }
-                    /* TODO: Check user has kick permissions*/
+                case 'kick': //Required: target; Optional: reason
                     await target.kick(reason)
                         .then(() => {
-                            console.log('Kick successful');
+                            console.log(`Kicked ${target.nickname} successfuly`);
                             interaction.reply({ embeds: [embed] });
                         })
                         .catch(err => {
@@ -216,21 +193,45 @@ module.exports = {
                             console.error(err);
                         });
                     break;
-
-                case 'masskick':
+                case 'masskick': //Required: a target list. 
+                    //create embed
+                    //await defer reply
+                    //go through the targets list and kick each one
+                    //add a field to the embed
+                    //what if the person already left
+                    //
                     await interaction.reply(target);
                     break;
-
-                case 'ban':
-                    console.log(target);
+                case 'ban': //Required: target; Optional: delete history (up to 7 days in secs), reason
+                    await target.ban({ deleteMessageSeconds: delete_days, reason: reason })
+                        .then(() => {
+                            console.log(`Banned ${target.nickname} successfuly`);
+                            interaction.reply({ embeds: [embed] });
+                        })
+                        .catch(err => {
+                            interaction.deleteReply();
+                            interaction.followUp('something went wrong, user not banned!');
+                            console.error(err);
+                        });
                     break;
-
-                case 'tempban':
-                    await interaction.reply('I am ready to work!');
+                case 'tempban': //Required: target, duration; Optional; delete history, reason
+                    await interaction.reply('Command NYI');
+                    //ban the target
+                    //update a database of temp-banned users
                     break;
-
-                case 'softban':
-                    await interaction.reply('I am ready to work!');
+                case 'softban': //Required: target; Optional: reason
+                    await target.ban({ deleteMessageSeconds: 86400, reason: reason })
+                        .then(() => {
+                            console.log(`Banned ${target.nickname} successfuly`);
+                            interaction.reply({ embeds: [embed] });
+                            interaction.guild.members.unban(target);
+                            console.log(`Unbanned ${target.nickname} successfuly`);
+                        })
+                        .catch(err => { //can probably move this
+                            interaction.deleteReply();
+                            interaction.followUp('something went wrong, user not banned!');
+                            console.error(err);
+                        });
                     break;
             }
         }
