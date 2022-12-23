@@ -22,6 +22,25 @@ An app can have <=25 subcommands within a subcommand group
 Commands can have <=25 options
 Options can have <=25 choices
 
+/*
+HOW TO READ COMMAND FILES:
+ - Each command file contains a "group" of commands which fall under a particular umbrella.
+   in this case - moderation activities; things server admins can use to keep the server safe and usable.
+
+- the command group is at the top level, named 'mod'
+- the subcommands are blocks of code which allocate the names, descriptions, and options for the actual callable commands.
+- in discord this appears thusly: /mod kick, /mod ban, /mod masskick.
+- /mod CANNOT be called by itself, as a consequence of being subcommanded
+- for safety, subcommands with options that require some target should always be required = true
+
+- at the end of the file is the interaction resolver. here, behaviour must be specified for each subcommand (or it will do nothing).
+  retrieve the name and input of the interaction using interaction.options methods and go from there.
+
+// https://discordjs.guide/popular-topics/embeds.html#embed-preview
+// https://www.codegrepper.com/tpc/avatar+command+discord.js
+// see: https://discordjs.guide/slash-commands/advanced-creation.html#option-types for the allowed input types
+*/
+
 Subcommand must not be above Command Group
 Command Group cannot be nested within Command Group
 Command > Command Group > Subcommand

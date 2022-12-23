@@ -1,20 +1,11 @@
-/*
-HOW TO READ COMMAND FILES:
- - Each command file contains a "group" of commands which fall under a particular umbrella.
-   in this case - moderation activities; things server admins can use to keep the server safe and usable.
-
-- the command group is at the top level, named 'mod'
-- the subcommands are blocks of code which allocate the names, descriptions, and options for the actual callable commands.
-- in discord this appears thusly: /mod kick, /mod ban, /mod masskick.
-- /mod CANNOT be called by itself, as a consequence of being subcommanded
-- for safety, subcommands with options that require some target should always be required = true
-
-- at the end of the file is the interaction resolver. here, behaviour must be specified for each subcommand (or it will do nothing).
-  retrieve the name and input of the interaction using interaction.options methods and go from there.
-*/
-// https://discordjs.guide/popular-topics/embeds.html#embed-preview
-// https://www.codegrepper.com/tpc/avatar+command+discord.js
-// see: https://discordjs.guide/slash-commands/advanced-creation.html#option-types for the allowed input types
+/**
+ * kick
+ * masskick
+ * ban
+ * softban
+ * tempban
+ * timeout 
+ */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const { EmbedBuilder } = require("discord.js");
@@ -49,9 +40,10 @@ function addDeleteOption(builder) {
                     { name: 'Last 3 days', value: 259200 },
                     { name: 'Last 7 days', value: 604800 }
                 )
-                .setMinValue(604800)
-                .setMaxValue(0));
+                .setMinValue(0)
+                .setMaxValue(604800));
 }
+
 
 /**
  * adds a String option to a command builder representing the reason a user is being removed
@@ -126,17 +118,17 @@ function buildEmbed(interaction, cmd_name, target, reason) {
 }
 
 //all commands are unavailable in DM
-let kick = buildSubCommand('kick', 'Kicks a user from the server.');
-let masskick = buildSubCommand('masskick', 'Kicks multiple users from the server.');
-let ban = buildSubCommand('ban', 'Bans a user from the server.');
-let tempban = buildSubCommand('tempban', 'Bans a user for a specified amount of time [NYI].');
-let softban = buildSubCommand('softban', 'Quickly bans and unbans a user and deletes their messages.');
+let kick = buildSubCommand('kick', 'kicks a user from the server');
+let masskick = buildSubCommand('masskick', 'kicks multiple users from the server');
+let ban = buildSubCommand('ban', 'bans a user from the server');
+let tempban = buildSubCommand('tempban', 'bans a user for a specified amount of time [NYI]');
+let softban = buildSubCommand('softban', 'quickly bans and unbans a user and deletes their messages');
 
 //exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
-        .setDescription('Moderation commands')
+        .setDescription('moderation commands')
         .setDMPermission(false) //unavailable in DM. at present can't set this stuff for individual subcommands
         .addSubcommand(kick) //start adding subcommands to the command
         .addSubcommand(ban)
@@ -145,10 +137,10 @@ module.exports = {
         .addSubcommand(subcommand => //masskick is a unique case (all other commands only target 1 user) so build separately
             subcommand
                 .setName('masskick')
-                .setDescription('Kicks multiple users from the server at once.')
+                .setDescription('kicks multiple users from the server at once')
                 .addStringOption(option =>
                     option.setName('targets')
-                        .setDescription('Users to remove, by @mention or ID, separated by a space')
+                        .setDescription('users to remove, by @mention or ID, separated by a space')
                         .setRequired(true))),
 
     //Each subcommand requires a different resolution for their options
