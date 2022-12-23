@@ -64,6 +64,12 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                     await interaction.reply(emoji.url);
                 }
                 break;
+            case 'add': 
+                break;
+            case 'delete':
+                break;
+            case 'score':
+                break;
         }
     },
 };
