@@ -10,14 +10,6 @@ Global: for publishing the command to all guilds the bot is in
     );
 */
 
-/**
-This module needs to be run whenever the codebase is updated with new commands
-in order for them to be registered with Discord - else they can't be used.
-This is a requirement set by Discord.
-NOTE: there is a delay and/or limit on how often this can be done
-TODO: automate this process
-*/
-
 const {REST, Routes} = require('discord.js');
 const {clientId, guildId, token} = require('./botconfig.json');
 const fs = require('node:fs');
