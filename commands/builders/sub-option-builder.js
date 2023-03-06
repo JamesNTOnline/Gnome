@@ -1,14 +1,37 @@
+import { SlashCommandSubcommandBuilder } from "discord.js";
 
 /**
  * Use this class and its methods to add options onto a command
  */
-class SubCommandOptionBuilder {
+class SubOptionBuilder {
+  #builder_name
+  #builder_desc
+  #builder
+
+  constructor(name, description) {
+    let subc_builder = new SlashCommandSubcommandBuilder()
+      .setName(name)
+      .setDescription(description)
+  }
+  /**
+   * Makes the command temporary.
+   * Will require the command caller to specify how long the command should last
+   * @param {SlashCommandSubcommandBuilder} builder - a subcommand builder object to add the temporary property to
+   */
+  makeCommandTemp(builder) {
+    if (builder.name.includes('temp')) {
+      builder.addIntegerOption(option =>
+        option.setName('duration')
+          .setDescription('How long the punishment should last')
+          .setRequired(true));
+    }
+  }
 
 
   /**
    * Add a single target user option onto a builder
    * For example, a /kick command will need a user target to kick
-   * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add options/subcommands to
+   * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add a target property to
    */
   addTargetUserOption(builder) {
     return builder
@@ -21,7 +44,7 @@ class SubCommandOptionBuilder {
 
   /**
  * Adds a  option to a command builder representing the reason a user is being removed
- * @param {SlashCommandBuilder, SlashCommandSubcommandBuilder} builder - builder object to add the option to
+ * @param {SlashCommandBuilder, SlashCommandSubcommandBuilder} builder - builder object to add the reason property to
  */
   addReasonOption(builder) {
     let is_required = false;
@@ -35,7 +58,7 @@ class SubCommandOptionBuilder {
           .setMaxLength(512)
           .setRequired(is_required));
   }
-  
+
 
   /**
    * Adds a choice of how many days worth of messages to purge when the command is called

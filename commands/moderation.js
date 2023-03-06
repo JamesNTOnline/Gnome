@@ -21,18 +21,14 @@ const { EmbedBuilder } = require("discord.js");
  * Kick/Masskick: TARGET, REASON
  * Tempban: TARGET, REASON, DURATION > DELETE
  */
+//split up into temp method and build method
 function buildSubCommand(name, desc) {
     let sub_cmd = new SlashCommandSubcommandBuilder()
         .setName(name)
         .setDescription(desc)
     sub_cmd = addTargetUserOption(sub_cmd);
     sub_cmd = addReasonOption(sub_cmd);
-    if (name.includes('temp')) {
-        sub_cmd.addIntegerOption(option =>
-            option.setName('duration')
-                .setDescription('How long the user should stay banned for')
-                .setRequired(true));
-    }
+    
     if (name.includes('ban') && !name.includes('soft')) {
         sub_cmd = addDeleteOption(sub_cmd)
     }
@@ -115,11 +111,11 @@ module.exports = {
         //permission check -> don't allow bot to touch itself or the user
         if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
             || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
-            interaction.reply('You don\'t have permission for that, naughty!');
+            interaction.reply('You don\'t have permission for that!');
         } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
-            interaction.reply('I aint gonna Gnome myself, blockhead!');
+            interaction.reply('I aint gonna Gnome myself!');
         } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)) { //don't let the command user do anything to themselves
-            interaction.reply('I can\'t help you Gnome yourself, idiot!');
+            interaction.reply('I can\'t help you Gnome yourself!');
         } else {
             //processing the options
             switch (cmd_name) {
