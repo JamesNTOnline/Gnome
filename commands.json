@@ -1,0 +1,8 @@
+[
+    { "command": "kick", "definition": "kicks a user from the server" },
+    { "command": "ban", "definition": "bans a user from the server" },
+    { "command": "masskick", "definition": "kicks multiple users from the server" },
+    { "command": "tempban", "definition": "bans a user for a specified length of time" },
+    { "command": "softban", "definition": "bans and unbans a user to purge their messages" }
+  ]
+  

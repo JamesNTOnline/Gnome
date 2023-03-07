@@ -8,7 +8,8 @@
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require('discord.js');
+const SubOptionBuilder = require('../builders/sub-option-builder.js');
 
 
 /** 
@@ -22,7 +23,7 @@ const { EmbedBuilder } = require("discord.js");
  * Tempban: TARGET, REASON, DURATION > DELETE
  */
 //split up into temp method and build method
-function buildSubCommand(name, desc) {
+/* function buildSubCommand(name, desc) {
     let sub_cmd = new SlashCommandSubcommandBuilder()
         .setName(name)
         .setDescription(desc)
@@ -33,10 +34,10 @@ function buildSubCommand(name, desc) {
         sub_cmd = addDeleteOption(sub_cmd)
     }
     return sub_cmd;
-}
+} */
 
 
-/**
+/** function somewhere else
  * Builds the chat embed message (basically, a nice way to display a mod action)
  * @param {*} interaction 
  * @param {String} cmd_name - the name of the subcommand
@@ -48,25 +49,42 @@ function buildEmbed(interaction, cmd_name, target, reason) {
     const embed = new EmbedBuilder();
     const name_formatted = cmd_name.charAt(0).toUpperCase() + cmd_name.slice(1);
     if (target)
-    embed.setTitle('~ ' + name_formatted + ' Report ~')
-        .setColor("#e56b00")
-        .addFields(
-            { name: 'Mod', value: `<@${interaction.user.id}>`, inline: true },
-            { name: 'User', value: `<@${target.id}>`, inline: true },
-            { name: 'ID', value: `${target.id}`, inline: true },
-            { name: 'Reason', value: reason }
-        )
-        .setThumbnail(`${target.displayAvatarURL({ dynamic: true })}`)
-        .setTimestamp(interaction.createdTimestamp);
+        embed.setTitle('~ ' + name_formatted + ' Report ~')
+            .setColor("#e56b00")
+            .addFields(
+                { name: 'Mod', value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'User', value: `<@${target.id}>`, inline: true },
+                { name: 'ID', value: `${target.id}`, inline: true },
+                { name: 'Reason', value: reason }
+            )
+            .setThumbnail(`${target.displayAvatarURL({ dynamic: true })}`)
+            .setTimestamp(interaction.createdTimestamp);
     return embed;
 }
 
+//builds a collection of command:description pairs using the json definition
+let commands; //commands collection
+fetch('commands.json')
+    .then(response => response.json())
+    .then(data => {
+        terms = data.reduce((acc, { term, definition }) => {
+            acc[term] = definition;
+            return acc;
+        }, {});
+    })
+    .catch(error => console.error(error));
+    console.log(commands);
+
 //all commands are unavailable in DM
-let kick = buildSubCommand('kick', 'kicks a user from the server');
-let masskick = buildSubCommand('masskick', 'kicks multiple users from the server');
-let ban = buildSubCommand('ban', 'bans a user from the server');
-let tempban = buildSubCommand('tempban', 'bans a user for a specified amount of time [NYI]');
-let softban = buildSubCommand('softban', 'quickly bans and unbans a user and deletes their messages');
+//building kick - needs user, target, optional reason
+let kick_builder = new SubOptionBuilder('kick', 'kicks a user from the server');
+kick_builder.addTargetUserOption();
+kick_builder.addReasonOption();
+let kick = kick_builder.getBuiltCmd();
+let masskick_builder = new SubOptionBuilder('masskick', 'kicks multiple users from the server');
+let ban_builder = new SubOptionBuilder('ban', 'bans a user from the server');
+let tempban_builder = new SubOptionBuilder('tempban', 'bans a user for a specified amount of time [NYI]');
+let softban_builder = new SubOptionBuilder('softban', 'quickly bans and unbans a user and deletes their messages');
 
 //exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
 module.exports = {
@@ -74,18 +92,18 @@ module.exports = {
         .setName('mod')
         .setDescription('moderation commands')
         .setDMPermission(false) //unavailable in DM. at present can't set this stuff for individual subcommands
-        .addSubcommand(kick) //start adding subcommands to the command
-        .addSubcommand(ban)
-        .addSubcommand(tempban)
-        .addSubcommand(softban)
-        .addSubcommand(subcommand => //masskick is a unique case (all other commands only target 1 user) so build separately
-            subcommand
-                .setName('masskick')
-                .setDescription('kicks multiple users from the server at once')
-                .addStringOption(option =>
-                    option.setName('targets')
-                        .setDescription('users to remove, by @mention or ID, separated by a space')
-                        .setRequired(true))),
+        .addSubcommand(kick), //start adding subcommands to the command
+        // .addSubcommand(ban)
+        // .addSubcommand(tempban)
+        // .addSubcommand(softban)
+        // .addSubcommand(subcommand => //masskick is a unique case (all other commands only target 1 user) so build separately
+        //     subcommand
+        //         .setName('masskick')
+        //         .setDescription('kicks multiple users from the server at once')
+        //         .addStringOption(option =>
+        //             option.setName('targets')
+        //                 .setDescription('users to remove, by @mention or ID, separated by a space')
+        //                 .setRequired(true))),
 
     //Each subcommand requires a different resolution for their options
     //interaction.options methods return different things about what happened in the command (i.e. target)
@@ -107,7 +125,7 @@ module.exports = {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
             target_ids = target.match(re); //returns an array with the chars in re stripped out
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
-        } 
+        }
         //permission check -> don't allow bot to touch itself or the user
         if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
             || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
@@ -120,7 +138,7 @@ module.exports = {
             //processing the options
             switch (cmd_name) {
                 case 'kick': //Tar: Reason
-                    if(!interaction.guild.members.cache.get(target.id)){
+                    if (!interaction.guild.members.cache.get(target.id)) {
                         interaction.reply('They aint here, bub!');
                         break;
                     }
