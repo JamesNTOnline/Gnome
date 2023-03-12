@@ -7,35 +7,8 @@
  * timeout 
  */
 
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
-const { EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const SubOptionBuilder = require('../builders/sub-option-builder.js');
-
-
-/** 
- * @param {String} name - the name of the subcommand
- * @param {String} desc - the description for what the subcommand does
- * @returns a subcommand builder object, representing a subcommand. this needs to be added onto a command builder object
- * TODO: refactor with above
- * ALL REQUIRED COMMANDS MUST COME BEFORE OPTIONALS
- * Ban/Softban: TARGET, REASON > DELETE
- * Kick/Masskick: TARGET, REASON
- * Tempban: TARGET, REASON, DURATION > DELETE
- */
-//split up into temp method and build method
-/* function buildSubCommand(name, desc) {
-    let sub_cmd = new SlashCommandSubcommandBuilder()
-        .setName(name)
-        .setDescription(desc)
-    sub_cmd = addTargetUserOption(sub_cmd);
-    sub_cmd = addReasonOption(sub_cmd);
-    
-    if (name.includes('ban') && !name.includes('soft')) {
-        sub_cmd = addDeleteOption(sub_cmd)
-    }
-    return sub_cmd;
-} */
-
 
 /** function somewhere else
  * Builds the chat embed message (basically, a nice way to display a mod action)
@@ -62,51 +35,35 @@ function buildEmbed(interaction, cmd_name, target, reason) {
     return embed;
 }
 
-//builds a collection of command:description pairs using the json definition
-let commands; //commands collection
-fetch('commands.json')
-    .then(response => response.json())
-    .then(data => {
-        terms = data.reduce((acc, { term, definition }) => {
-            acc[term] = definition;
-            return acc;
-        }, {});
-    })
-    .catch(error => console.error(error));
-    console.log(commands);
-
-//all commands are unavailable in DM
-//building kick - needs user, target, optional reason
-let kick_builder = new SubOptionBuilder('kick', 'kicks a user from the server');
-kick_builder.addTargetUserOption();
-kick_builder.addReasonOption();
-let kick = kick_builder.getBuiltCmd();
-let masskick_builder = new SubOptionBuilder('masskick', 'kicks multiple users from the server');
-let ban_builder = new SubOptionBuilder('ban', 'bans a user from the server');
-let tempban_builder = new SubOptionBuilder('tempban', 'bans a user for a specified amount of time [NYI]');
-let softban_builder = new SubOptionBuilder('softban', 'quickly bans and unbans a user and deletes their messages');
+/* commands are more or less "modular" and can have any types of options added that make sense
+by default, a command is constructed with target(s) and a reason, provided by its optionbuilder.
+a command is retrieved from the builder using getSubCmd().
+May also bypass this abstraction and hand-craft options using the discord.js module directly. (way messier!)
+ALL *REQUIRED* OPTIONS *MUST* COME BEFORE OPTIONALS */
+let kick = new SubOptionBuilder('kick', 'Kicks a user from the server').getSubCmd();
+//build ban cmd - add a delete option and then get the command
+let banbuilder = new SubOptionBuilder('ban', 'Bans a user from the server');
+banbuilder.addDeleteOption();
+let ban = banbuilder.getSubCmd();
+let unban = new SubOptionBuilder('unban', 'Remove the ban from a user').getSubCmd();
+let softban = new SubOptionBuilder('softban', 'Quickly bans and unbans a user and deletes their messages').getSubCmd();
+let masskick = new SubOptionBuilder('masskick', 'Kicks multiple users from the server').getSubCmd();
+let tempban = new SubOptionBuilder('tempban', 'Bans a user for a specified amount of time [NYI]').getSubCmd();
 
 //exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
-        .setDescription('moderation commands')
-        .setDMPermission(false) //unavailable in DM. at present can't set this stuff for individual subcommands
-        .addSubcommand(kick), //start adding subcommands to the command
-        // .addSubcommand(ban)
-        // .addSubcommand(tempban)
-        // .addSubcommand(softban)
-        // .addSubcommand(subcommand => //masskick is a unique case (all other commands only target 1 user) so build separately
-        //     subcommand
-        //         .setName('masskick')
-        //         .setDescription('kicks multiple users from the server at once')
-        //         .addStringOption(option =>
-        //             option.setName('targets')
-        //                 .setDescription('users to remove, by @mention or ID, separated by a space')
-        //                 .setRequired(true))),
-
-    //Each subcommand requires a different resolution for their options
-    //interaction.options methods return different things about what happened in the command (i.e. target)
+        .setDescription('Commands to remove unruly users')
+        .setDMPermission(false) //make these commands unavailable in direct messages
+        .addSubcommand(kick) //start adding subcommands to the root command
+        .addSubcommand(ban)
+        .addSubcommand(unban)
+        .addSubcommand(tempban)
+        .addSubcommand(softban)
+        .addSubcommand(masskick),
+    /*Each subcommand requires a different resolution for their options
+    interaction.options methods return different things about what happened in the command (i.e. target)*/
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
@@ -126,12 +83,12 @@ module.exports = {
             target_ids = target.match(re); //returns an array with the chars in re stripped out
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
         }
-        //permission check -> don't allow bot to touch itself or the user
+        //permission checks -> don't allow bot to touch itself or the user
         if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
             || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
             interaction.reply('You don\'t have permission for that!');
         } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
-            interaction.reply('I aint gonna Gnome myself!');
+            interaction.reply('I can\'t Gnome myself!');
         } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t help you Gnome yourself!');
         } else {
@@ -139,7 +96,7 @@ module.exports = {
             switch (cmd_name) {
                 case 'kick': //Tar: Reason
                     if (!interaction.guild.members.cache.get(target.id)) {
-                        interaction.reply('They aint here, bub!');
+                        interaction.reply('They\'re not in the server!');
                         break;
                     }
                     await interaction.guild.members.kick(target, reason)
@@ -148,7 +105,7 @@ module.exports = {
                         })
                         .catch(err => {
                             interaction.deleteReply();
-                            interaction.followUp('something went wrong, user not kicked!');
+                            interaction.followUp('Something went wrong, user not kicked!');
                             console.error(err);
                         });
                     break;
@@ -168,7 +125,7 @@ module.exports = {
                         })
                         .catch(err => {
                             interaction.deleteReply();
-                            interaction.followUp('something went wrong, user not banned!');
+                            interaction.followUp('Something went wrong, user not banned!');
                             console.error(err);
                         });
                     break;
@@ -185,7 +142,18 @@ module.exports = {
                         })
                         .catch(err => { //can probably move this
                             interaction.deleteReply();
-                            interaction.followUp('something went wrong, user not banned!');
+                            interaction.followUp('Something went wrong, user not banned!');
+                            console.error(err);
+                        });
+                    break;
+                case 'unban':
+                    await interaction.guild.members.unban(target)
+                        .then(() => {
+                            interaction.reply(`Unbanned ${target} because: ${reason}`)
+                        })
+                        .catch(err => {
+                            interaction.deleteReply();
+                            interaction.followUp('Not sure if that worked, check the audit log');
                             console.error(err);
                         });
                     break;

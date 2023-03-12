@@ -1,7 +1,7 @@
 const { SlashCommandSubcommandBuilder } = require("discord.js");
 
 /**
- * Use this class and its methods to add options onto a command
+ * Use this class and its methods to add options onto a subcommand
  */
 class SubOptionBuilder {
   #builder_name
@@ -13,13 +13,21 @@ class SubOptionBuilder {
     this.#builder_desc = description;
     this.#builder = new SlashCommandSubcommandBuilder()
       .setName(name)
-      .setDescription(description)
-   //addTargetUserOption(); //all commands
-    //addReasonOption();
+      .setDescription(description);
+    if (name.includes('mass')) {
+      this.addMassUserOption();
+    } else {
+      this.addTargetUserOption();
+    }
+    this.addReasonOption();
   }
+  
 
-
-  getBuiltCmd(){
+  /**
+   * Retrieves the subcommand and its options from the optionbuilder
+   * @returns {SlashCommandSubcommandBuilder} - the subcommandbuilder object as implemented by discord.js
+   */
+  getSubCmd() {
     return this.#builder;
   }
 
@@ -27,7 +35,6 @@ class SubOptionBuilder {
   /**
    * Makes the command temporary.
    * Will require the command caller to specify how long the command should last
-   * @param {SlashCommandSubcommandBuilder} builder - a subcommand builder object to add the temporary property to
    */
   makeCommandTemp() {
     if (this.#builder.name.includes('temp')) {
@@ -40,9 +47,19 @@ class SubOptionBuilder {
 
 
   /**
+   * Adds a string option which allows the moderator to tag multiple users for action
+   */
+  addMassUserOption() {
+    this.#builder.addStringOption(option =>
+      option.setName('targets')
+        .setDescription('Users to remove, by @mention or ID, separated by a space')
+        .setRequired(true));
+  }
+
+
+  /**
    * Add a single target user option onto a builder
    * For example, a /kick command will need a user target to kick
-   * @param {SlashCommandBuilder, SlashSubCommandBuilder} builder - builder object to add a target property to
    */
   addTargetUserOption() {
     this.#builder.addUserOption(option =>
@@ -54,24 +71,22 @@ class SubOptionBuilder {
 
   /**
  * Adds a  option to a command builder representing the reason a user is being removed
- * @param {SlashCommandBuilder, SlashCommandSubcommandBuilder} builder - builder object to add the reason property to
  */
   addReasonOption() {
-    let is_required = false;
+    let required = false; //refactor this
     if (this.#builder.name.includes('ban')) { //ban commands should always have a reason (why? they have permanent effects)
-      is_required = true;
+      required = true;
     }
     this.#builder.addStringOption(option =>
       option.setName('reason')
         .setDescription('The behaviour the user is being punished for')
         .setMaxLength(512)
-        .setRequired(is_required));
+        .setRequired(required));
   }
 
 
   /**
    * Adds a choice of how many days worth of messages to purge when the command is called
-   * @param {SlashCommandBuilder, SlashCommandSubcommandBuilder} builder 
    */
   addDeleteOption() {
     this.#builder.addIntegerOption(option =>
@@ -87,7 +102,9 @@ class SubOptionBuilder {
         .setMinValue(0)
         .setMaxValue(604800));
   }
-  // additional methods can be defined here
+
+
+
 }
 
 module.exports = SubOptionBuilder;
