@@ -9,6 +9,7 @@
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const SubOptionBuilder = require('../builders/sub-option-builder.js');
+const commandMap = require('../commands');
 
 /** function somewhere else
  * Builds the chat embed message (basically, a nice way to display a mod action)
@@ -35,20 +36,21 @@ function buildEmbed(interaction, cmd_name, target, reason) {
     return embed;
 }
 
+
 /* commands are more or less "modular" and can have any types of options added that make sense
 by default, a command is constructed with target(s) and a reason, provided by its optionbuilder.
 a command is retrieved from the builder using getSubCmd().
 May also bypass this abstraction and hand-craft options using the discord.js module directly. (way messier!)
 ALL *REQUIRED* OPTIONS *MUST* COME BEFORE OPTIONALS */
-let kick = new SubOptionBuilder('kick', 'Kicks a user from the server').getSubCmd();
+let kick = new SubOptionBuilder('kick', commandMap['kick']).getSubCmd();
 //build ban cmd - add a delete option and then get the command
-let banbuilder = new SubOptionBuilder('ban', 'Bans a user from the server');
+let banbuilder = new SubOptionBuilder('ban', commandMap['ban']);
 banbuilder.addDeleteOption();
 let ban = banbuilder.getSubCmd();
-let unban = new SubOptionBuilder('unban', 'Remove the ban from a user').getSubCmd();
-let softban = new SubOptionBuilder('softban', 'Quickly bans and unbans a user and deletes their messages').getSubCmd();
-let masskick = new SubOptionBuilder('masskick', 'Kicks multiple users from the server').getSubCmd();
-let tempban = new SubOptionBuilder('tempban', 'Bans a user for a specified amount of time [NYI]').getSubCmd();
+let unban = new SubOptionBuilder('unban', commandMap['unban']).getSubCmd();
+let softban = new SubOptionBuilder('softban', commandMap['softban']).getSubCmd();
+let masskick = new SubOptionBuilder('masskick', commandMap['masskick']).getSubCmd();
+let tempban = new SubOptionBuilder('tempban', commandMap['tempban']).getSubCmd();
 
 //exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
 module.exports = {

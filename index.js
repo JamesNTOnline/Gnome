@@ -47,7 +47,8 @@ const eventsFiles = fs.readdirSync(eventsPath).filter(file=>file.endsWith('.js')
 for (const file of eventsFiles){
     const fp = path.join(eventsPath, file);
     const event = require(fp);
-    /*(...args) - variable # of arguments. with slash commands arguments may have
+    /*
+    (...args) - variable # of arguments. with slash commands arguments may have
     different options, or none. collects args into an array
     the iterable is given to the function and expanded depending on expected arguments
     */

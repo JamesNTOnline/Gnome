@@ -23,6 +23,7 @@ for(const file of commandFiles){
     commandList.push(command.data.toJSON());
 }
 
+
 //prep REST module
 const rest = new REST({version:'10'}).setToken(token);
 
