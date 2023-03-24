@@ -52,7 +52,10 @@ let softban = new SubOptionBuilder('softban', commandMap['softban']).getSubCmd()
 let masskick = new SubOptionBuilder('masskick', commandMap['masskick']).getSubCmd();
 let tempban = new SubOptionBuilder('tempban', commandMap['tempban']).getSubCmd();
 
-//exporting a slashcommandbuilder object. this object needs to have a name and description (required by command.toJSON)
+/*
+exporting a slashcommandbuilder object. 
+this object needs to have a name and description (required by command.toJSON)
+*/
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mod')
