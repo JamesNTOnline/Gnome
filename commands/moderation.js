@@ -53,7 +53,7 @@ let masskick = new SubOptionBuilder('masskick', commandMap['masskick']).getSubCm
 let tempban = new SubOptionBuilder('tempban', commandMap['tempban']).getSubCmd();
 
 /*
-exporting a slashcommandbuilder object. test
+exporting a slashcommandbuilder object. 
 this object needs to have a name and description (required by command.toJSON)
 */
 module.exports = {
