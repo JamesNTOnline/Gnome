@@ -102,9 +102,7 @@ class SubOptionBuilder {
         .setMinValue(0)
         .setMaxValue(604800));
   }
-
-
-
+  
 }
 
 module.exports = SubOptionBuilder;

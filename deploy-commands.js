@@ -33,7 +33,7 @@ const rest = new REST({version:'10'}).setToken(token);
         console.log(`refreshing ${commandList.length} commands...`);
         //put to refresh all commands
         const data = await rest.put(
-            Routes.applicationGuildCommands(clientId, guildId),
+            Routes.applicationCommands(clientId),
             {body: commandList},
         );
         console.log(`successfully reloaded ${commandList.length} commands`);
