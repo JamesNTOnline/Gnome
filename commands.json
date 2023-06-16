@@ -1,38 +1,46 @@
 [
-  {
-    "command": "kick",
-    "definition": "Just testing that this works"
-  },
-  {
-    "command": "ban",
-    "definition": "Bans a user from the server"
-  },
-  {
-    "command": "masskick",
-    "definition": "Kicks multiple users from the server"
-  },
-  {
-    "command": "tempban",
-    "definition": "Bans a user for a specified length of time"
-  },
-  {
-    "command": "softban",
-    "definition": "Bans and unbans a user to purge their messages"
-  },
-  {
-    "command": "unban",
-    "definition": "Removes the ban from a banned user"
-  },
-  {
-    "command": "NYI",
-    "definition": "NYI"
-  },
-  {
-    "command": "NYI",
-    "definition": "NYI"
-  },
-  {
-    "command": "NYI",
-    "definition": "NYI"
-  }
+    {
+        "name": "mod",
+        "description": "Commands to remove unruly users",
+        "subcommands": [
+            {
+                "name": "kick",
+                "description": "Kicks a user from the server"
+            },
+            {
+                "name": "ban",
+                "description": "Bans a user from the server"
+            },
+            {
+                "name": "unban",
+                "description": "Removes multiple messages from the server"
+            },
+            {
+                "name": "tempban",
+                "description": "Removes multiple messages from the server"
+            },
+            {
+                "name": "softban",
+                "description": "Removes multiple messages from the server"
+            },
+            {
+                "name": "masskick",
+                "description": "Removes multiple messages from the server"
+            }
+        ]
+    },
+    {
+        "name": "new-command",
+        "description": "Description for the new command",
+        "subcommands": [
+            {
+            "name": "subcommand1",
+            "description": "Description for subcommand1"
+            },
+            {
+            "name": "subcommand2",
+            "description": "Description for subcommand2"
+            }
+        ]
+    }
 ]

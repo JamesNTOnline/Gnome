@@ -1,7 +1,7 @@
 
 //best practice? use const. change to let or var if needed
-const fs =  require('node:fs'); //filesystem module
-const path = require('node:path'); //path module
+const fs =  require('fs'); //filesystem module
+const path = require('path'); //path module
 const {Client, Events, Collection, GatewayIntentBits} = require('discord.js');
 const {token} = require('./botconfig.json');
 

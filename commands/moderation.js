@@ -9,7 +9,6 @@
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const SubOptionBuilder = require('../builders/sub-option-builder.js');
-const commandMap = require('../commands');
 
 /** function somewhere else
  * Builds the chat embed message (basically, a nice way to display a mod action)
