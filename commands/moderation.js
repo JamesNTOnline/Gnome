@@ -69,14 +69,14 @@ module.exports = {
     /*Each subcommand requires a different resolution for their options
     interaction.options methods return different things about what happened in the command (i.e. target)*/
     async execute(interaction) {
+        let target_ids = []; //array for processing multiple users
+        let embed; 
         const cmd_name = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
-        let target = interaction.options.getUser('target') ?? interaction.options.getString('targets'); //the target(s) for the action member ?? string
+        const target = interaction.options.getUser('target') ?? interaction.options.getString('targets'); //the target(s) for the action member ?? string
         const delete_days = interaction.options.getInteger('delete') ?? 0;
         const user_perms = interaction.member.permissions;
         //console.log (target);
-        let target_ids = []; //array for processing multiple users
-        let embed; //embed declared here due to block scoping
         if (!cmd_name.includes('mass')) {
             embed = buildEmbed(interaction, cmd_name, target, reason);
         }
@@ -87,6 +87,7 @@ module.exports = {
             target_ids = target.match(re); //returns an array with the chars in re stripped out
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
         }
+
         //permission checks -> don't allow bot to touch itself or the user
         if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
             || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
@@ -96,6 +97,7 @@ module.exports = {
         } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t help you Gnome yourself!');
         } else {
+
             //processing the options
             switch (cmd_name) {
                 case 'kick': //Tar: Reason
@@ -108,9 +110,7 @@ module.exports = {
                             interaction.reply({ embeds: [embed] });
                         })
                         .catch(err => {
-                            interaction.deleteReply();
-                            interaction.followUp('Something went wrong, user not kicked!');
-                            console.error(err);
+                            handleError(interaction, err);
                         });
                     break;
                 case 'masskick': //TarList
@@ -128,9 +128,7 @@ module.exports = {
                             interaction.reply({ embeds: [embed] });
                         })
                         .catch(err => {
-                            interaction.deleteReply();
-                            interaction.followUp('Something went wrong, user not banned!');
-                            console.error(err);
+                            handleError(interaction, err);
                         });
                     break;
                 case 'tempban': //Tar, Dur: Hist, Reason
@@ -145,9 +143,7 @@ module.exports = {
                             interaction.guild.members.unban(target);
                         })
                         .catch(err => { //can probably move this
-                            interaction.deleteReply();
-                            interaction.followUp('Something went wrong, user not banned!');
-                            console.error(err);
+                            handleError(interaction, err);
                         });
                     break;
                 case 'unban':
@@ -156,12 +152,18 @@ module.exports = {
                             interaction.reply(`Unbanned ${target} because: ${reason}`)
                         })
                         .catch(err => {
-                            interaction.deleteReply();
-                            interaction.followUp('Not sure if that worked, check the audit log');
-                            console.error(err);
+                            handleError(interaction, err);
                         });
                     break;
             }
         }
     },
 };
+
+
+//add some additional customisation code later if needed
+function handleError(interaction, err){
+    interaction.deleteReply();
+    interaction.followUp('Something went wrong:\n${err.message}');
+    console.error(err);
+}
