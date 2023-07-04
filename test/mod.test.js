@@ -1,6 +1,9 @@
-const { Client, GatewayIntentBits, Permissions } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 const { token } = require('../botconfig.json');
 const moderation = require('../commands/moderation.js');
+
+const adminPermissions = PermissionsBitField.Administrator;
+// Add other necessary flags here
 
 describe('/mod commands', () => {
     let client;
@@ -41,13 +44,16 @@ describe('/mod commands', () => {
             id: '716390085896962058', // Return the target user ID
             displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/attachments/439519668819066880/1125909946702246029/253e242aa050e7fa.jpg'), // Mock the displayAvatarURL method
         };
+
         const interaction = {
             id: '123456789', // A unique ID for the interaction (can be any string)
             guildId: '580797956983226379', // The ID of the guild where the command is executed
             channelId: '1048732929473384538', // The ID of the channel where the command is executed
             member: {
                 id: '284930711566155777', // The ID of the member executing the command
-                permissions: Permissions.FLAGS.BAN_MEMBERS,  // An instance of Permissions with the KICK_MEMBERS flag
+                permissions: {
+                    has: jest.fn().mockReturnValue(true),
+                },  // An instance of Permissions with the KICK_MEMBERS flag
             },
             options: {
                 getSubcommand: jest.fn().mockReturnValue('kick'), // Return 'kick' as the subcommand
@@ -68,22 +74,33 @@ describe('/mod commands', () => {
 
     test('Should execute /mod ban command', async () => {
         // Simulate the /mod ban command interaction
-
+        // Simulate the /mod kick command interaction
+        const targetUser = {
+            id: '716390085896962058', // Return the target user ID
+            displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/attachments/439519668819066880/1125909946702246029/253e242aa050e7fa.jpg'), // Mock the displayAvatarURL method
+        };
         const interaction = {
             id: '123456789', // A unique ID for the interaction (can be any string)
             guildId: '580797956983226379', // The ID of the guild where the command is executed
             channelId: '1048732929473384538', // The ID of the channel where the command is executed
             member: {
                 id: '284930711566155777', // The ID of the member executing the command
-                permissions: Permissions.FLAGS.BAN_MEMBERS, // An array of permission flags for the member
+                permissions: adminPermissions // An array of permission flags for the member
             },
             options: {
                 getSubcommand: jest.fn().mockReturnValue('ban'), // Return 'ban' as the subcommand
-                getUser: jest.fn().mockReturnValue({ id: '716390085896962058' }), // Return the target user ID
+                getUser: jest.fn().mockReturnValue(targetUser), // Return the target user ID
                 getString: jest.fn().mockReturnValue('Reason for ban'), // Return the reason for ban
                 getInteger: jest.fn().mockReturnValue(7), // Return the number of days to delete messages
             },
             reply: jest.fn(), // A mock reply function to capture the response
+        };
+
+        // Mock the member object with required properties
+        const member = {
+            permissions: {
+                has: jest.fn().mockReturnValue(true),
+            },
         };
 
         // Execute your /mod ban command logic
