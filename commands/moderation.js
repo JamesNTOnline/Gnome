@@ -21,35 +21,33 @@ const SubOptionBuilder = require('../builders/sub-option-builder.js');
 function buildEmbed(interaction, cmd_name, target, reason) {
     const embed = new EmbedBuilder();
     const name_formatted = cmd_name.charAt(0).toUpperCase() + cmd_name.slice(1);
-    if (target)
+    if (target) {
         embed.setTitle('~ ' + name_formatted + ' Report ~')
             .setColor("#e56b00")
             .addFields(
-                { name: 'Mod', value: `<@${interaction.user.id}>`, inline: true },
+                { name: 'Mod', value: `<@${interaction.member.id}>`, inline: true },
                 { name: 'User', value: `<@${target.id}>`, inline: true },
                 { name: 'ID', value: `${target.id}`, inline: true },
                 { name: 'Reason', value: reason }
             )
             .setThumbnail(`${target.displayAvatarURL({ dynamic: true })}`)
             .setTimestamp(interaction.createdTimestamp);
+    }
     return embed;
 }
 
 
-/* commands are more or less "modular" and can have any types of options added that make sense
-by default, a command is constructed with target(s) and a reason, provided by its optionbuilder.
-a command is retrieved from the builder using getSubCmd().
-May also bypass this abstraction and hand-craft options using the discord.js module directly. (way messier!)
+/* commands are more or less "modular" and can have any types of options added. A finished cmd is retrieved using getSubCmd()
 ALL *REQUIRED* OPTIONS *MUST* COME BEFORE OPTIONALS */
-let kick = new SubOptionBuilder('kick', commandMap['kick']).getSubCmd();
+let kick = new SubOptionBuilder('kick').getSubCmd();
 //build ban cmd - add a delete option and then get the command
-let banbuilder = new SubOptionBuilder('ban', commandMap['ban']);
+let banbuilder = new SubOptionBuilder('ban');
 banbuilder.addDeleteOption();
-let ban = banbuilder.getSubCmd();
-let unban = new SubOptionBuilder('unban', commandMap['unban']).getSubCmd();
-let softban = new SubOptionBuilder('softban', commandMap['softban']).getSubCmd();
-let masskick = new SubOptionBuilder('masskick', commandMap['masskick']).getSubCmd();
-let tempban = new SubOptionBuilder('tempban', commandMap['tempban']).getSubCmd();
+let ban = banbuilder.getSubCmd(); //look at why i need to do this
+let unban = new SubOptionBuilder('unban').getSubCmd();
+let softban = new SubOptionBuilder('softban').getSubCmd();
+let masskick = new SubOptionBuilder('masskick').getSubCmd();
+let tempban = new SubOptionBuilder('tempban').getSubCmd();
 
 /*
 exporting a slashcommandbuilder object. 

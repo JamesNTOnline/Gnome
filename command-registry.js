@@ -1,4 +1,4 @@
-
+const fs =  require('fs'); //filesystem module
 //commands.json holds data regarding each command
 const commandsData = JSON.parse(fs.readFileSync('commands.json'));
 
@@ -8,22 +8,22 @@ const commandsData = JSON.parse(fs.readFileSync('commands.json'));
  * @returns {String} - The description of what the command does
  */
 function getDescription(command) {
-  const topLevelCommand = commandsData.find(cmd => cmd.name === command);
-  if (topLevelCommand) {
-    return topLevelCommand.description;
-  }
-
-  // If the command is not found at the top level, search in subcommands
-  for (const cmd of commandsData) {
-    // Find the subcommand within each top level command
-    const subcommand = cmd.subcommands.find(subcmd => subcmd.name === command);
-    if (subcommand) {
-      return subcommand.description;
+    const topLevelCommand = commandsData.find(cmd => cmd.name === command);
+    if (topLevelCommand) {
+        return topLevelCommand.description;
     }
-  }
 
-  // Command not found
-  return "Command not found.";
+    // If the command is not found at the top level, search in subcommands
+    for (const cmd of commandsData) {
+        // Find the subcommand within each top level command
+        const subcommand = cmd.subcommands.find(subcmd => subcmd.name === command);
+        if (subcommand) {
+            return subcommand.description;
+        }
+    }
+
+    // Command not found
+    return "Command not found.";
 }
 
 module.exports = { commandsData, getDescription };

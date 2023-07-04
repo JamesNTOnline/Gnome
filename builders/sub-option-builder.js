@@ -14,7 +14,7 @@ class SubOptionBuilder {
         this.#builder_desc = commandRegistry.getDescription(name);
         this.#builder = new SlashCommandSubcommandBuilder()
             .setName(name)
-            .setDescription(description);
+            .setDescription(this.#builder_desc);
         if (name.includes('mass')) {
             this.addMassUserOption();
         } else {
