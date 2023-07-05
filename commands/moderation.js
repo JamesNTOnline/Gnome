@@ -92,7 +92,7 @@ module.exports = {
             interaction.reply('You don\'t have permission for that!');
         } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
             interaction.reply('I can\'t Gnome myself!');
-        } else if (target.id == interaction.user.id || target_ids.includes(interaction.user.id)) { //don't let the command user do anything to themselves
+        } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t help you Gnome yourself!');
         } else {
 
