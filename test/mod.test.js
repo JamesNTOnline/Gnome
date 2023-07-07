@@ -17,7 +17,7 @@ const mockGuild = {
         kick: jest.fn().mockResolvedValue(), // Add the kick method mock
         cache: {
             get: jest.fn().mockReturnValue(true),
-        
+
         },
     },
 };
@@ -28,6 +28,25 @@ const mockAdmin = {
         has: jest.fn().mockReturnValue(true),
     },  // An instance of Permissions with the KICK_MEMBERS flag
 };
+
+
+function mockInteraction(options) {
+    return {
+        id: '123456789',
+        guildId: '580797956983226379',
+        channelId: '1048732929473384538',
+        guild: mockGuild,
+        member: mockAdmin,
+        client: options.client,
+        options: {
+            getSubcommand: jest.fn().mockReturnValue(options.subcommand),
+            getUser: jest.fn().mockReturnValue(mockTarget),
+            getString: jest.fn().mockReturnValue(options.reason),
+            getInteger: jest.fn().mockReturnValue(options.delete),
+        },
+        reply: jest.fn(),
+    };
+}
 
 describe('/mod commands', () => {
     let client;
@@ -59,69 +78,42 @@ describe('/mod commands', () => {
         await client.destroy();
     });
 
-    test('Should execute /mod kick command', async () => {
+
+    test('testing a successful /mod kick command', async () => {
         const kickMock = jest.fn().mockResolvedValue(); // Mock the kick method
-
         const targetUser = mockTarget;
-
-        const interaction = {
-            id: '123456789',
-            guildId: '580797956983226379',
-            channelId: '1048732929473384538',
-            guild: mockGuild,
-            member: mockAdmin,
+        const interaction = mockInteraction({
             client: client,
-            options: {
-                getSubcommand: jest.fn().mockReturnValue('kick'),
-                getUser: jest.fn().mockReturnValue(mockTarget),
-                getString: jest.fn().mockReturnValue('Reason for kick'),
-                getInteger: jest.fn().mockReturnValue(0),
-            },
-            reply: jest.fn(),
-        };
-
+            subcommand: 'kick',
+            reason: 'Reason for kick',
+            delete: 0,
+        });
         // Mock the kick method within the guild members cache
         mockGuild.members.kick = kickMock;
-
         await moderation.execute(interaction);
-
-        // Assert that the reply function was called with the expected embed
+        // Assert that the reply function was called with the expected embed - in this case i simply expect an embed, 
+        // but could specify which fields are included.
         expect(interaction.reply).toHaveBeenCalledWith({ embeds: [expect.any(Object)] });
-        expect(kickMock).toHaveBeenCalledWith(targetUser, 'Reason for kick');
+        expect(kickMock).toHaveBeenCalledWith(targetUser, 'Reason for kick'); //check that the user was kicked with the reason specified earlier
     });
 
 
-    test('Should execute /mod ban command', async () => {
-        // Simulate the /mod ban command interaction
-        // Simulate the /mod kick command interaction
+    test('testing a successful /mod ban command', async () => {
+        const banMock = jest.fn().mockResolvedValue(); // Mock the kick method
         const targetUser = mockTarget;
-        const interaction = {
-            id: '123456789', // A unique ID for the interaction (can be any string)
-            guild: mockGuild,
-            guildId: '580797956983226379', // The ID of the guild where the command is executed
-            channelId: '1048732929473384538', // The ID of the channel where the command is executed
-            member: mockAdmin,
+        const interaction = mockInteraction({
             client: client,
-            options: {
-                getSubcommand: jest.fn().mockReturnValue('ban'), // Return 'ban' as the subcommand
-                getUser: jest.fn().mockReturnValue(mockTarget), // Return the target user ID
-                getString: jest.fn().mockReturnValue('Reason for ban'), // Return the reason for ban
-                getInteger: jest.fn().mockReturnValue(7), // Return the number of days to delete messages
-            },
-            reply: jest.fn(), // A mock reply function to capture the response
-        };
+            subcommand: 'ban',
+            reason: 'Reason for ban',
+            delete: 86400,
+        });
 
-        // Mock the member object with required properties
-        const member = {
-            permissions: {
-                has: jest.fn().mockReturnValue(true),
-            },
-        };
-
-        // Execute your /mod ban command logic
+        // Mock the kick method within the guild members cache
+        mockGuild.members.ban = banMock;
         await moderation.execute(interaction);
-
-        // Assert that the reply function was called with the expected response
-        expect(interaction.reply).toHaveBeenCalledWith('Ban command executed successfully.');
+        // Assert that the reply function was called with the expected embed - in this case i simply expect an embed, 
+        // but could specify which fields are included.
+        expect(interaction.reply).toHaveBeenCalledWith({ embeds: [expect.any(Object)] });
+        expect(banMock).toHaveBeenCalledWith(targetUser, {"deleteMessageSeconds": 86400, "reason": "Reason for ban"}); //check that the user was kicked with the reason specified earlier
     });
 });
