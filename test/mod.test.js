@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js')
 const { token } = require('../botconfig.json');
 const moderation = require('../commands/moderation.js');
 
-const mockTarget = {
+const targetMock = {
     id: 'target id',
     displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/attachments/900132649916596334/1086116570784350308/IMG_9122.jpg'),
 };
@@ -36,7 +36,7 @@ function mockInteraction(options) {
         client: options.client,
         options: {
             getSubcommand: jest.fn().mockReturnValue(options.subcommand),
-            getUser: jest.fn().mockReturnValue(options.targetMock),
+            getUser: jest.fn().mockReturnValue(targetMock),
             getString: jest.fn().mockReturnValue(options.reason),
             getInteger: jest.fn().mockReturnValue(options.delete),
         },
@@ -46,7 +46,6 @@ function mockInteraction(options) {
 
 describe('/mod commands', () => {
     let client;
-    let targetMock;
     beforeAll(async () => { //sets up once before all tests
         client = new Client({
             intents: [
@@ -59,10 +58,6 @@ describe('/mod commands', () => {
                 id: 'client id',
             },
         });
-        targetMock = {
-            id: 'target id',
-            displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/attachments/900132649916596334/1086116570784350308/IMG_9122.jpg'),
-        };
 
         const clientReady = new Promise((resolve) => {
             client.once('ready', () => {
@@ -82,7 +77,6 @@ describe('/mod commands', () => {
     test('testing a successful /mod kick command', async () => {
         const kickMock = jest.fn().mockResolvedValue(); // Mock the kick method
         const interaction = mockInteraction({
-            targetMock: targetMock,
             client: client,
             subcommand: 'kick',
             reason: 'Reason for kick',
@@ -94,14 +88,13 @@ describe('/mod commands', () => {
         // Assert that the reply function was called with the expected embed - in this case i simply expect an embed, 
         // but could specify which fields are included.
         expect(interaction.reply).toHaveBeenCalledWith({ embeds: [expect.any(Object)] });
-        expect(kickMock).toHaveBeenCalledWith(targetUser, 'Reason for kick'); //check that the user was kicked with the reason specified earlier
+        expect(kickMock).toHaveBeenCalledWith(targetMock, 'Reason for kick'); //check that the user was kicked with the reason specified earlier
     });
 
 
     test('testing a successful /mod ban command', async () => {
         const banMock = jest.fn().mockResolvedValue(); // Mock the kick method
         const interaction = mockInteraction({
-            targetMock, targetMock,
             client: client,
             subcommand: 'ban',
             reason: 'Reason for ban',
@@ -114,6 +107,6 @@ describe('/mod commands', () => {
         // Assert that the reply function was called with the expected embed - in this case i simply expect an embed, 
         // but could specify which fields are included.
         expect(interaction.reply).toHaveBeenCalledWith({ embeds: [expect.any(Object)] });
-        expect(banMock).toHaveBeenCalledWith(targetUser, {deleteMessageSeconds: 86400, reason: "Reason for ban"}); //check that the user was kicked with the reason specified earlier
+        expect(banMock).toHaveBeenCalledWith(targetMock, {deleteMessageSeconds: 86400, reason: "Reason for ban"}); //check that the user was kicked with the reason specified earlier
     });
 });
