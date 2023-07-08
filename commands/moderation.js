@@ -75,7 +75,7 @@ module.exports = {
         const delete_days = interaction.options.getInteger('delete') ?? 0;
         const user_perms = interaction.member.permissions;
         //console.log (target);
-        if (!cmd_name.includes('mass')) {
+        if (!cmd_name.includes('mass')) { //MOVE THIS WHY BUILD THE EMBED IF COMMAND FAILS?
             embed = buildEmbed(interaction, cmd_name, target, reason);
         }
         if (!target) { // if for some reason there's no target, don't do anything
