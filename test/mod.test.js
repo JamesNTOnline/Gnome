@@ -5,10 +5,10 @@ const moderation = require('../commands/moderation.js');
 
 const targetMock = {
     id: 'target id',
-    displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/attachments/900132649916596334/1086116570784350308/IMG_9122.jpg'),
+    displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/tar_avatar.jpg'),
 };
 
-const mockGuild = {
+const guildMock = {
     members: {
         kick: jest.fn().mockResolvedValue(), // Add the kick method mock
         cache: {
@@ -17,8 +17,9 @@ const mockGuild = {
     }
 };
 
-const mockAdmin = {
-    id: '284930711566155777',
+const adminMock = {
+    id: 'admin id',
+    displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/admin_avatar.jpg'),
     permissions: {
         has: jest.fn().mockReturnValue(true),
     }
@@ -26,9 +27,9 @@ const mockAdmin = {
 
 
 describe('/mod commands', () => {
-    let client;
+    let clientMock;
     beforeAll(async () => { //sets up once before all tests
-        client = new Client({
+        clientMock = new Client({
             intents: [
                 GatewayIntentBits.Guilds,
                 GatewayIntentBits.GuildMessages,
@@ -41,109 +42,120 @@ describe('/mod commands', () => {
         });
 
         const clientReady = new Promise((resolve) => {
-            client.once('ready', () => {
+            clientMock.once('ready', () => {
                 resolve();
             });
         });
 
-        await client.login(token);
+        await clientMock.login(token);
         await clientReady;
     });
 
     afterAll(async () => {
-        await client.destroy();
+        await clientMock.destroy();
     });
 
 
-    test('testing a successful /mod kick command', async () => {
+    test('testing: a successful /mod kick command', async () => {
         const kickMock = jest.fn().mockResolvedValue();
-        mockGuild.members.kick = kickMock;
-        const interaction = setupInteraction(client, 'kick', 'Reason for kick', 0);
-        
-        await moderation.execute(interaction);
-        assertSuccessfulCommandExecution(interaction, kickMock, [targetMock, 'Reason for kick']);
+        guildMock.members.kick = kickMock;
+        const interactionMock = setupMockInteraction(clientMock, 'kick', 'Reason for kick', 0);
+
+        await moderation.execute(interactionMock);
+        assertSuccessfulCommandExecution(interactionMock, kickMock, [targetMock, 'Reason for kick']);
     });
 
-    test('testing a successful /mod ban command', async () => {
+    test('testing: a successful /mod ban command', async () => {
         const banMock = jest.fn().mockResolvedValue();
-        mockGuild.members.ban = banMock;
-        const interaction = setupInteraction(client, 'ban', 'Reason for ban', 86400);
-        
-        await moderation.execute(interaction);
-        assertSuccessfulCommandExecution(interaction, banMock, [targetMock, { deleteMessageSeconds: 86400, reason: 'Reason for ban' }]);
+        guildMock.members.ban = banMock;
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 86400);
+
+        await moderation.execute(interactionMock);
+        assertSuccessfulCommandExecution(interactionMock, banMock, [targetMock, { deleteMessageSeconds: 86400, reason: 'Reason for ban' }]);
     });
 
 
-    test('testing a failed /mod ban command due to client targetting itself', async () => {
+    test('testing: failed /mod ban due to client targetting itself', async () => {
         const banMock = jest.fn().mockResolvedValue();
-        mockGuild.members.ban = banMock;
-        const interaction = setupInteraction(client, 'ban', 'Reason for ban', 0);
+        guildMock.members.ban = banMock;
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
         // Set the target ID to be the same as the client's user ID
-        interaction.options.getUser.mockReturnValue({
-            id: client.user.id,
-            displayAvatarURL: jest.fn().mockReturnValue(client.user.defaultAvatarURL()),
+        interactionMock.options.getUser.mockReturnValue({
+            id: clientMock.user.id,
+            displayAvatarURL: jest.fn().mockReturnValue(clientMock.user.defaultAvatarURL),
         });
-        await moderation.execute(interaction);
+        await moderation.execute(interactionMock);
 
-        expect(interaction.reply).toHaveBeenCalledWith('I can\'t Gnome myself!');
-        expect(mockGuild.members.ban).not.toHaveBeenCalled();
+        expect(interactionMock.reply).toHaveBeenCalledWith('I can\'t Gnome myself!');
+        expect(guildMock.members.ban).not.toHaveBeenCalled();
     });
 
-    test('testing a failed /mod kick command due to insufficient permissions', async () => {
+    test('testing: failed /mod ban when user targets themselves', async () => {
+        const banMock = jest.fn().mockResolvedValue();
+        guildMock.members.ban = banMock;
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
+        // Set the target ID to be the same as the command caller's ID
+        interactionMock.options.getUser.mockReturnValue(adminMock);
+        await moderation.execute(interactionMock);
+
+        expect(interactionMock.reply).toHaveBeenCalledWith('I can\'t help you Gnome yourself!');
+        expect(guildMock.members.ban).not.toHaveBeenCalled();
+    });
+
+    test('testing: failed /mod kick due to insufficient permissions', async () => {
         const kickMock = jest.fn().mockResolvedValue();
-        mockGuild.members.kick = kickMock;
-        mockAdmin.permissions.has.mockImplementation((flag) => {
+        guildMock.members.kick = kickMock;
+        adminMock.permissions.has.mockImplementation((flag) => {
             return flag === PermissionsBitField.Flags.KickMembers ? false : true;
         });
-        const interaction = setupInteraction(client, 'kick', 'Reason for kick', 0);
-        await moderation.execute(interaction);
-        assertInsufficientPermissions(interaction, kickMock);
+        const interactionMock = setupMockInteraction(clientMock, 'kick', 'Reason for kick', 0);
+        await moderation.execute(interactionMock);
+        assertInsufficientPermissions(interactionMock, kickMock);
     });
 
-    test('testing a failed /mod ban command due to insufficient permissions', async () => {
+    test('testing: failed /mod ban due to insufficient permissions', async () => {
         const banMock = jest.fn().mockResolvedValue();
-        mockGuild.members.ban = banMock;
-        mockAdmin.permissions.has.mockImplementation((flag) => {
+        guildMock.members.ban = banMock;
+        adminMock.permissions.has.mockImplementation((flag) => {
             return flag === PermissionsBitField.Flags.BanMembers ? false : true;
         });
-        const interaction = setupInteraction(client, 'ban', 'Reason for ban', 0);
-        await moderation.execute(interaction);
-        assertInsufficientPermissions(interaction, banMock);
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
+        await moderation.execute(interactionMock);
+        assertInsufficientPermissions(interactionMock, banMock);
     });
 
 
 });
 
 
-
-function mockInteraction(options) {
-    return {
+/**
+ * Sets up an interaction object for testing purposes.
+ * @param {Client} client - The Discord.js client instance.
+ * @param {string} subcommand - The subcommand for the interaction.
+ * @param {string} reason - The reason value for the interaction.
+ * @param {number} deleteValue - The delete value for the interaction.
+ * @returns {Object} The configured interaction object.
+ */
+function setupMockInteraction(client, subcommand, reason, deleteValue) {
+    // Create and configure the interaction object
+    const interaction = {
         id: '123456789',
         guildId: '580797956983226379',
         channelId: '1048732929473384538',
-        guild: mockGuild,
-        member: mockAdmin,
-        client: options.client,
+        guild: guildMock,
+        member: adminMock,
+        client: client,
         options: {
-            getSubcommand: jest.fn().mockReturnValue(options.subcommand),
+            getSubcommand: jest.fn().mockReturnValue(subcommand),
             getUser: jest.fn().mockReturnValue(targetMock),
-            getString: jest.fn().mockReturnValue(options.reason),
-            getInteger: jest.fn().mockReturnValue(options.delete),
+            getString: jest.fn().mockReturnValue(reason),
+            getInteger: jest.fn().mockReturnValue(deleteValue),
         },
         reply: jest.fn(),
     };
-}
-
-// Helper function to setup the interaction object
-function setupInteraction(client, subcommand, reason, deleteValue) {
-    const interaction = mockInteraction({
-        client: client,
-        subcommand: subcommand,
-        reason: reason,
-        delete: deleteValue,
-    });
     return interaction;
 }
+
 
 // Helper function to assert the successful execution of a command
 function assertSuccessfulCommandExecution(interaction, mockMethod, expectedOptions) {
