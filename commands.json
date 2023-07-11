@@ -1,31 +1,31 @@
 [
     {
         "name": "mod",
-        "description": "Commands to remove unruly users",
+        "description": "Commands to remove bad users",
         "subcommands": [
             {
                 "name": "kick",
-                "description": "Kicks a user from the server"
+                "description": "Remove a user but allow them to rejoin"
             },
             {
                 "name": "ban",
-                "description": "Bans a user from the server"
+                "description": "Remove a user and prevent them rejoining"
             },
             {
                 "name": "unban",
-                "description": "Removes multiple messages from the server"
+                "description": "Reverses the ban on a specific user"
             },
             {
                 "name": "tempban",
-                "description": "Removes multiple messages from the server"
+                "description": "Sets a ban on a user temporarily"
             },
             {
                 "name": "softban",
-                "description": "Removes multiple messages from the server"
+                "description": "Purge a user's messages with a quick ban and unban"
             },
             {
                 "name": "masskick",
-                "description": "Removes multiple messages from the server"
+                "description": "Remove multiple users from the server"
             }
         ]
     },

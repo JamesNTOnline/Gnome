@@ -69,6 +69,7 @@ module.exports = {
     async execute(interaction) {
         let target_ids = []; //array for processing multiple users
         let embed; 
+        let response;
         const cmd_name = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
         const target = interaction.options.getUser('target') ?? interaction.options.getString('targets'); //the target(s) for the action member ?? string
@@ -83,6 +84,7 @@ module.exports = {
         } else if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
             target_ids = target.match(re); //returns an array with the chars in re stripped out
+            console.log(target_ids);
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
         }
 
@@ -112,13 +114,19 @@ module.exports = {
                         });
                     break;
                 case 'masskick': //TarList
+                    response = 'Kicked: '
+                    target_ids.forEach((id) => { //check if the ID is a valid guild member
+                        if(interaction.guild.members.cache.get(id)){
+                            response += `<@${id}> ` //
+                        }
+                    });
                     //create embed
                     //await defer reply
                     //go through the targets list and kick each one
                     //add a field to the embed
                     //what if the person already left
                     //
-                    await interaction.reply('[NYI - Coming Soon!]');
+                    await interaction.reply(response);
                     break;
                 case 'ban': //Tar: Hist, Reason
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
