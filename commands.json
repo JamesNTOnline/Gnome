@@ -25,7 +25,7 @@
             },
             {
                 "name": "masskick",
-                "description": "Remove multiple users from the server"
+                "description": "Remove up to 5 users from the server at once"
             }
         ]
     },

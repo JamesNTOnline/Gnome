@@ -68,7 +68,7 @@ module.exports = {
     interaction.options methods return different things about what happened in the command (i.e. target)*/
     async execute(interaction) {
         let target_ids = []; //array for processing multiple users
-        let embed; 
+        let embed;
         let response;
         const cmd_name = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
@@ -79,11 +79,14 @@ module.exports = {
         if (!cmd_name.includes('mass')) { //MOVE THIS WHY BUILD THE EMBED IF COMMAND FAILS?
             embed = buildEmbed(interaction, cmd_name, target, reason);
         }
+
         if (!target) { // if for some reason there's no target, don't do anything
             interaction.reply('Target could not be found, did you enter it correctly?');
         } else if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
             target_ids = target.match(re); //returns an array with the chars in re stripped out
+            // Remove entries with more or fewer than 18 characters
+            target_ids = target_ids.filter(id => id.length === 18);
             console.log(target_ids);
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
         }
@@ -97,8 +100,7 @@ module.exports = {
         } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t help you Gnome yourself!');
         } else {
-
-            //processing the options
+            // processing the options
             switch (cmd_name) {
                 case 'kick': //Tar: Reason
                     if (!interaction.guild.members.cache.get(target.id)) {
@@ -112,21 +114,31 @@ module.exports = {
                         .catch(err => {
                             handleError(interaction, err);
                         });
-                    break;
-                case 'masskick': //TarList
-                    response = 'Kicked: '
-                    target_ids.forEach((id) => { //check if the ID is a valid guild member
-                        if(interaction.guild.members.cache.get(id)){
-                            response += `<@${id}> ` //
+                    break; 
+                case 'masskick': 
+                    await interaction.reply('Trying to kick members...');
+                    let response = '**Kicked: **';
+                    const invalidIds = []; //stores unkickable/nonexistent users
+                    try {
+                        const promises = target_ids.map(async (id) => {
+                            const member = interaction.guild.members.cache.get(id);
+                            if (member) {
+                                await member.send(reason); // Send the reason to the member
+                                await interaction.guild.members.kick(member, reason);
+                                response += `<@${id}> `;
+                            } else {
+                                invalidIds.push(id);
+                            }
+                        });
+                        await Promise.all(promises); //wait for all of the promises to resolve
+                        //invalid IDs would be e.g. users not present on the server
+                        if (invalidIds.length > 0) {
+                            response += '\n**Invalid: **' + invalidIds.join(', ');
                         }
-                    });
-                    //create embed
-                    //await defer reply
-                    //go through the targets list and kick each one
-                    //add a field to the embed
-                    //what if the person already left
-                    //
-                    await interaction.reply(response);
+                        await interaction.editReply(response);
+                    } catch (err) {
+                        handleError(interaction, err);
+                    }
                     break;
                 case 'ban': //Tar: Hist, Reason
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
@@ -168,7 +180,7 @@ module.exports = {
 
 
 //add some additional customisation code later if needed
-function handleError(interaction, err){
+function handleError(interaction, err) {
     interaction.deleteReply();
     interaction.followUp('Something went wrong:\n${err.message}');
     console.error(err);

@@ -53,7 +53,8 @@ class SubOptionBuilder {
     addMassUserOption() {
         this.#builder.addStringOption(option =>
             option.setName('targets')
-                .setDescription('Users to remove, by @mention or ID, separated by a space')
+                .setDescription(`Users to ${this.#builder_name}, by @mention or 18-digit ID`)
+                .setMaxLength(115)
                 .setRequired(true));
     }
 
