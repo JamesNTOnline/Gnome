@@ -1,10 +1,7 @@
 /**
- * kick
- * masskick
- * ban
- * softban
- * tempban
- * timeout 
+ * TO DO: 
+ * add logic to check for moderators/higher ranked users rather than fail the command
+ * update
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
