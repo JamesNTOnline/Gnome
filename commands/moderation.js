@@ -1,7 +1,8 @@
 /**
  * TO DO: 
  * add logic to check for moderators/higher ranked users rather than fail the command
- * update
+ * add DM code to all removal commands
+ * move embed builder somewhere else - unused for now
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
@@ -79,7 +80,11 @@ module.exports = {
 
         if (!target) { // if for some reason there's no target, don't do anything
             interaction.reply('Target could not be found, did you enter it correctly?');
-        } else if (typeof target === 'string') {
+        } 
+        else if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for
+            interaction.reply('They\'re not in the server!');
+        }
+        else if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
             target_ids = target.match(re); //returns an array with the chars in re stripped out
             // Remove entries with more or fewer than 18 characters
@@ -97,16 +102,18 @@ module.exports = {
         } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t help you Gnome yourself!');
         } else {
-            // processing the options
-            switch (cmd_name) {
-                case 'kick': //Tar: Reason
-                    if (!interaction.guild.members.cache.get(target.id)) {
+
+            switch (cmd_name) { // processing the options
+                case 'kick': 
+                    if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for
                         interaction.reply('They\'re not in the server!');
                         break;
                     }
+                    //tell the member what happened
+                    await member.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
                     await interaction.guild.members.kick(target, reason)
                         .then(() => {
-                            interaction.reply({ embeds: [embed] });
+                            interaction.reply(`**Kicked:** <@${target.id}>`);
                         })
                         .catch(err => {
                             handleError(interaction, err);
@@ -114,33 +121,43 @@ module.exports = {
                     break; 
                 case 'masskick': 
                     await interaction.reply('Trying to kick members...');
-                    let response = '**Kicked: **';
-                    const invalidIds = []; //stores unkickable/nonexistent users
+                    let response = `**Kicked: **`;
+                    let invalid = `\n**Invalid: **`;
+                    let invalidCount = 0;
+                    //const invalidIds = []; //invalid IDs would be e.g. users not present on the server
                     try {
-                        const promises = target_ids.map(async (id) => {
+                        const promises = target_ids.map(async (id) => { 
                             const member = interaction.guild.members.cache.get(id);
-                            if (member) {
-                                await member.send(reason); // Send the reason to the member
+                            if (member) { //member retrieved, send a message and try to kick them
+                                await member.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
                                 await interaction.guild.members.kick(member, reason);
-                                response += `<@${id}> `;
+                                response += `<@${id}> `; // add the user's tag to the response string
                             } else {
-                                invalidIds.push(id);
+                                invalid += `${id}, `;
+                                invalidCount++;
+                                //invalidIds.push(id);
                             }
                         });
                         await Promise.all(promises); //wait for all of the promises to resolve
-                        //invalid IDs would be e.g. users not present on the server
-                        if (invalidIds.length > 0) {
-                            response += '\n**Invalid: **' + invalidIds.join(', ');
+                        if (invalidCount > 0) {
+                            invalid = invalid.slice(0, -2); // Removes the last comma and space
+                            response += invalid; // Update the response with the invalid IDs
+                            //response += '\n**Invalid: **' + invalidIds.join(', ');
                         }
                         await interaction.editReply(response);
                     } catch (err) {
                         handleError(interaction, err);
                     }
                     break;
-                case 'ban': //Tar: Hist, Reason
+                case 'ban':
+                    if (!interaction.guild.members.cache.get(target.id)) {
+                        interaction.reply('They\'re not in the server!');
+                        break;
+                    }
+                    await member.send(`You were banned from ${interaction.guild.name} for: ${reason}`); // Send the reason to the member
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
                         .then(() => {
-                            interaction.reply({ embeds: [embed] });
+                            interaction.reply(`**Banned:** <@${id}>`);
                         })
                         .catch(err => {
                             handleError(interaction, err);
@@ -154,7 +171,7 @@ module.exports = {
                 case 'softban': //T: R
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: 86400, reason: reason })
                         .then(() => {
-                            interaction.reply({ embeds: [embed] });
+                            interaction.reply(`**Kicked:** <@${id}>`);
                             interaction.guild.members.unban(target);
                         })
                         .catch(err => { //can probably move this
@@ -179,6 +196,6 @@ module.exports = {
 //add some additional customisation code later if needed
 function handleError(interaction, err) {
     interaction.deleteReply();
-    interaction.followUp('Something went wrong:\n${err.message}');
+    interaction.followUp(`Something went wrong:\n${err.message}`);
     console.error(err);
 }
