@@ -81,7 +81,7 @@ module.exports = {
         if (!target) { // if for some reason there's no target, don't do anything
             interaction.reply('Target could not be found, did you enter it correctly?');
         } 
-        else if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for
+        else if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for //dont happen if user is being unbanned
             interaction.reply('They\'re not in the server!');
         }
         else if (typeof target === 'string') {
@@ -102,23 +102,31 @@ module.exports = {
         } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) { //don't let the command user do anything to themselves
             interaction.reply('I can\'t help you Gnome yourself!');
         } else {
-
             switch (cmd_name) { // processing the options
+                /**
+                 * Kicking a user removes them from the server without preventing them rejoining.
+                 * The kick may fail still if the user leaves the server or the ID seems valid but isn't.
+                 */
                 case 'kick': 
                     if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for
-                        interaction.reply('They\'re not in the server!');
+                        interaction.reply('Invalid ID - user may not be in this server');
                         break;
                     }
-                    //tell the member what happened
-                    await member.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
+                    //tell the member what happened (wont be received if bot is blocked. no way around this!)
+                    await target.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
                     await interaction.guild.members.kick(target, reason)
-                        .then(() => {
+                        .then(() => { 
                             interaction.reply(`**Kicked:** <@${target.id}>`);
                         })
                         .catch(err => {
                             handleError(interaction, err);
                         });
-                    break; 
+                    break;
+                /**
+                 * Masskick is intended to allow removing multiple users in a single stroke
+                 * Discord's API rate limits requests, so the command must respond and then updates its response afterwards
+                 * Command can tolerate partial faultiness, so feedback to the caller what was un/successful!
+                 */
                 case 'masskick': 
                     await interaction.reply('Trying to kick members...');
                     let response = `**Kicked: **`;
@@ -141,7 +149,7 @@ module.exports = {
                         await Promise.all(promises); //wait for all of the promises to resolve
                         if (invalidCount > 0) {
                             invalid = invalid.slice(0, -2); // Removes the last comma and space
-                            response += invalid; // Update the response with the invalid IDs
+                            response += invalid;
                             //response += '\n**Invalid: **' + invalidIds.join(', ');
                         }
                         await interaction.editReply(response);
@@ -149,35 +157,58 @@ module.exports = {
                         handleError(interaction, err);
                     }
                     break;
+                /**
+                 * Ban blocks the user from rejoining (and deletes some of their last posts) until reversed
+                 */
                 case 'ban':
-                    if (!interaction.guild.members.cache.get(target.id)) {
-                        interaction.reply('They\'re not in the server!');
+                    const member = interaction.guild.members.cache.get(target.id);
+                    if (!member) {
+                        interaction.reply('Invalid ID - user may not be in this server');
                         break;
                     }
-                    await member.send(`You were banned from ${interaction.guild.name} for: ${reason}`); // Send the reason to the member
-                    await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
+                    await member.send(generateOutputString(cmd_name, interaction.guild.name, reason))
+                        .catch(() => {
+                            console.log(`${member.id} has DMs closed or blocked the bot`)
+                            // Sending a DM may fail due to a user's privacy settings - ignore any error from this
+                        });
+                    await interaction.guild.members.ban(member, { deleteMessageSeconds: delete_days, reason: reason })
                         .then(() => {
-                            interaction.reply(`**Banned:** <@${id}>`);
+                            interaction.reply(`**Banned:** ${member}`);
                         })
                         .catch(err => {
                             handleError(interaction, err);
                         });
                     break;
+                /**
+                 * Tempban serves as a medium between a ban and a kick - a ban which will reverse itself after time
+                 * NYI - need to track how long a user should stay banned for, and check for this elsewhere as an event to reverse
+                 */
                 case 'tempban': //Tar, Dur: Hist, Reason
                     await interaction.reply('[NYI]');
                     //ban the target
                     //update a database of temp-banned users
                     break;
+                /**
+                 * Softban is a ban followed by an immediate reversal, which serves to quickly purge messages instead of manually deleting them
+                 * At the moment the amount of deleted messages is set to the max, but could be variable if the need arises
+                 */
                 case 'softban': //T: R
+                    if (!interaction.guild.members.cache.get(target.id)) {
+                        interaction.reply('Invalid ID - user may not be in this server');
+                        break;
+                    }
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: 86400, reason: reason })
                         .then(() => {
-                            interaction.reply(`**Kicked:** <@${id}>`);
+                            interaction.reply(`**Purged:** <@${target.id}>`);
                             interaction.guild.members.unban(target);
                         })
                         .catch(err => { //can probably move this
                             handleError(interaction, err);
                         });
                     break;
+                /**
+                 * Reverses a ban for a specific user
+                 */
                 case 'unban':
                     await interaction.guild.members.unban(target)
                         .then(() => {
@@ -199,3 +230,16 @@ function handleError(interaction, err) {
     interaction.followUp(`Something went wrong:\n${err.message}`);
     console.error(err);
 }
+
+//formats a nice output string that can be DMd to the user
+function generateOutputString(cmd_name, guildName, reason) {
+    let actionMessage = '';
+  
+    if (cmd_name.includes('kick')) {
+      actionMessage = 'kicked';
+    } else if (cmd_name.includes('ban')) {
+      actionMessage = cmd_name + 'ned';
+    }
+  
+    return `You were ${actionMessage} from ${guildName} for: ${reason}`;
+  }
