@@ -66,23 +66,13 @@ module.exports = {
     interaction.options methods return different things about what happened in the command (i.e. target)*/
     async execute(interaction) {
         let target_ids = []; //array for processing multiple users
-        let embed;
-        let response;
         const cmd_name = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
         const target = interaction.options.getUser('target') ?? interaction.options.getString('targets'); //the target(s) for the action member ?? string
         const delete_days = interaction.options.getInteger('delete') ?? 0;
-        const user_perms = interaction.member.permissions;
-        //console.log (target);
-        if (!cmd_name.includes('mass')) { //MOVE THIS WHY BUILD THE EMBED IF COMMAND FAILS?
-            embed = buildEmbed(interaction, cmd_name, target, reason);
-        }
 
         if (!target) { // if for some reason there's no target, don't do anything
             interaction.reply('Target could not be found, did you enter it correctly?');
-        } 
-        else if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for //dont happen if user is being unbanned
-            interaction.reply('They\'re not in the server!');
         }
         else if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
@@ -93,15 +83,7 @@ module.exports = {
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
         }
 
-        //permission checks -> don't allow bot to touch itself or the user
-        if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
-            || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
-            interaction.reply('You don\'t have permission for that!');
-        } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
-            interaction.reply('I can\'t Gnome myself!');
-        } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) { //don't let the command user do anything to themselves
-            interaction.reply('I can\'t help you Gnome yourself!');
-        } else {
+        if (checkPermissions(interaction, cmd_name, target, target_ids)){
             switch (cmd_name) { // processing the options
                 /**
                  * Kicking a user removes them from the server without preventing them rejoining.
@@ -210,6 +192,10 @@ module.exports = {
                  * Reverses a ban for a specific user
                  */
                 case 'unban':
+                    
+                    guild.bans.fetch(target)
+                    .then(console.log)
+                        .catch(console.error);
                     await interaction.guild.members.unban(target)
                         .then(() => {
                             interaction.reply(`Unbanned ${target} because: ${reason}`)
@@ -222,6 +208,24 @@ module.exports = {
         }
     },
 };
+
+
+// checks whether the commands are allowed to process
+function checkPermissions(interaction, cmd_name, target, target_ids) {
+    const user_perms = interaction.member.permissions;
+    if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
+        || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
+        interaction.reply({content:'You don\'t have permission for that!', ephemeral: true });
+    } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
+        interaction.reply({content:'I can\'t Gnome myself!', ephemeral: true });
+    } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) {
+        interaction.reply({content:'I can\'t help you Gnome yourself!', ephemeral: true });
+    } else {
+        return true; // Only return true if all permission checks pass
+    }
+
+    return false; // Return false if any of the permission checks fail
+}
 
 
 //add some additional customisation code later if needed
@@ -241,5 +245,5 @@ function generateOutputString(cmd_name, guildName, reason) {
       actionMessage = cmd_name + 'ned';
     }
   
-    return `You were ${actionMessage} from ${guildName} for: ${reason}`;
+    return `You were ${actionMessage} from ${guildName}:\n${reason}`;
   }

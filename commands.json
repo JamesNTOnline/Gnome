@@ -13,7 +13,7 @@
             },
             {
                 "name": "unban",
-                "description": "Reverses the ban on a specific user"
+                "description": "Reverses a ban"
             },
             {
                 "name": "tempban",
