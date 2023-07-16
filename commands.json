@@ -5,27 +5,31 @@
         "subcommands": [
             {
                 "name": "kick",
-                "description": "Remove a user but allow them to rejoin"
+                "description": "Kicks a user, allows rejoining"
             },
             {
                 "name": "ban",
-                "description": "Remove a user and prevent them rejoining"
+                "description": "Bans a user, prevents rejoining"
             },
             {
                 "name": "unban",
-                "description": "Reverses a ban"
+                "description": "Undoes a previous ban"
+            },
+            {
+                "name": "editban",
+                "description": "Updates the reason a user was banned"
             },
             {
                 "name": "tempban",
-                "description": "Sets a ban on a user temporarily"
+                "description": "Sets a ban which expires automatically"
             },
             {
                 "name": "softban",
-                "description": "Purge a user's messages with a quick ban and unban"
+                "description": "Bans then unbans a user; purges messages"
             },
             {
                 "name": "masskick",
-                "description": "Remove up to 5 users from the server at once"
+                "description": "Kicks up to five users at once"
             }
         ]
     },

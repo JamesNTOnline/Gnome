@@ -73,6 +73,7 @@ module.exports = {
 
         if (!target) { // if for some reason there's no target, don't do anything
             interaction.reply('Target could not be found, did you enter it correctly?');
+            return;
         }
         else if (typeof target === 'string') {
             const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
@@ -83,13 +84,13 @@ module.exports = {
             //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
         }
 
-        if (checkPermissions(interaction, cmd_name, target, target_ids)){
+        if (checkPermissions(interaction, cmd_name, target, target_ids)) {
             switch (cmd_name) { // processing the options
                 /**
                  * Kicking a user removes them from the server without preventing them rejoining.
                  * The kick may fail still if the user leaves the server or the ID seems valid but isn't.
                  */
-                case 'kick': 
+                case 'kick':
                     if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch for
                         interaction.reply('Invalid ID - user may not be in this server');
                         break;
@@ -97,7 +98,7 @@ module.exports = {
                     //tell the member what happened (wont be received if bot is blocked. no way around this!)
                     await target.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
                     await interaction.guild.members.kick(target, reason)
-                        .then(() => { 
+                        .then(() => {
                             interaction.reply(`**Kicked:** <@${target.id}>`);
                         })
                         .catch(err => {
@@ -109,14 +110,14 @@ module.exports = {
                  * Discord's API rate limits requests, so the command must respond and then updates its response afterwards
                  * Command can tolerate partial faultiness, so feedback to the caller what was un/successful!
                  */
-                case 'masskick': 
+                case 'masskick':
                     await interaction.reply('Trying to kick members...');
                     let response = `**Kicked: **`;
                     let invalid = `\n**Invalid: **`;
                     let invalidCount = 0;
                     //const invalidIds = []; //invalid IDs would be e.g. users not present on the server
                     try {
-                        const promises = target_ids.map(async (id) => { 
+                        const promises = target_ids.map(async (id) => {
                             const member = interaction.guild.members.cache.get(id);
                             if (member) { //member retrieved, send a message and try to kick them
                                 await member.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
@@ -143,19 +144,24 @@ module.exports = {
                  * Ban blocks the user from rejoining (and deletes some of their last posts) until reversed
                  */
                 case 'ban':
-                    const member = interaction.guild.members.cache.get(target.id);
-                    if (!member) {
-                        interaction.reply('Invalid ID - user may not be in this server');
+                    // Check if target is already banned
+                    const bannedUsers = await interaction.guild.bans.fetch();
+                    if (bannedUsers.get(target.id)) {
+                        interaction.reply({ content: `${target} is already banned.`, ephemeral: true });
                         break;
                     }
-                    await member.send(generateOutputString(cmd_name, interaction.guild.name, reason))
-                        .catch(() => {
-                            console.log(`${member.id} has DMs closed or blocked the bot`)
-                            // Sending a DM may fail due to a user's privacy settings - ignore any error from this
-                        });
-                    await interaction.guild.members.ban(member, { deleteMessageSeconds: delete_days, reason: reason })
+                    // Check if target is in the guild so bot can send them a DM
+                    if (interaction.guild.members.cache.has(target.id)) {
+                        await target.send(generateOutputString(cmd_name, interaction, reason))
+                            .catch(() => {
+                                console.log(`${target.id} has DMs closed or blocked the bot`);
+                                // Sending a DM may fail due to a user's privacy settings - ignore errors
+                            });
+                    }
+                    // User is not already banned - ban them and post in the server
+                    await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
                         .then(() => {
-                            interaction.reply(`**Banned:** ${member}`);
+                            interaction.reply(`**Banned** ${target}: ${reason}`);
                         })
                         .catch(err => {
                             handleError(interaction, err);
@@ -192,18 +198,26 @@ module.exports = {
                  * Reverses a ban for a specific user
                  */
                 case 'unban':
-                    
-                    guild.bans.fetch(target)
-                    .then(console.log)
-                        .catch(console.error);
-                    await interaction.guild.members.unban(target)
-                        .then(() => {
-                            interaction.reply(`Unbanned ${target} because: ${reason}`)
+                    await interaction.guild.bans.fetch(target)
+                        .then(async () => {
+                            await interaction.guild.members.unban(target)
+                                .then(() => {
+                                    interaction.reply(`Unbanned ${target}: ${reason}`);
+                                })
+                                .catch((err) => {
+                                    console.error('Error while unbanning:', err);
+                                    handleError(interaction, err);
+                                });
                         })
-                        .catch(err => {
-                            handleError(interaction, err);
+                        .catch(() => {
+                            interaction.reply({ content: `${target} is not banned.`, ephemeral: true });
                         });
                     break;
+                case 'editban': //Tar, Dur: Hist, Reason
+                    await interaction.reply('[NYI]');
+                    //ban the target
+                    //update a database of temp-banned users
+                break;
             }
         }
     },
@@ -215,11 +229,11 @@ function checkPermissions(interaction, cmd_name, target, target_ids) {
     const user_perms = interaction.member.permissions;
     if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
         || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
-        interaction.reply({content:'You don\'t have permission for that!', ephemeral: true });
+        interaction.reply({ content: 'You don\'t have permission for that!', ephemeral: true });
     } else if (target.id == interaction.client.user.id || target_ids.includes(interaction.client.user.id)) {
-        interaction.reply({content:'I can\'t Gnome myself!', ephemeral: true });
+        interaction.reply({ content: 'I can\'t Gnome myself!', ephemeral: true });
     } else if (target.id == interaction.member.id || target_ids.includes(interaction.member.id)) {
-        interaction.reply({content:'I can\'t help you Gnome yourself!', ephemeral: true });
+        interaction.reply({ content: 'I can\'t help you Gnome yourself!', ephemeral: true });
     } else {
         return true; // Only return true if all permission checks pass
     }
@@ -236,14 +250,14 @@ function handleError(interaction, err) {
 }
 
 //formats a nice output string that can be DMd to the user
-function generateOutputString(cmd_name, guildName, reason) {
+function generateOutputString(cmd_name, interaction, reason) {
     let actionMessage = '';
-  
+
     if (cmd_name.includes('kick')) {
-      actionMessage = 'kicked';
+        actionMessage = 'kicked';
     } else if (cmd_name.includes('ban')) {
-      actionMessage = cmd_name + 'ned';
+        actionMessage = cmd_name + 'ned';
     }
-  
-    return `You were ${actionMessage} from ${guildName}:\n${reason}`;
-  }
+
+    return `You were ${actionMessage} from ${interaction.guild.name}:\n${reason}`;
+}
