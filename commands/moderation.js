@@ -46,6 +46,7 @@ let unban = new SubOptionBuilder('unban').getSubCmd();
 let softban = new SubOptionBuilder('softban').getSubCmd();
 let masskick = new SubOptionBuilder('masskick').getSubCmd();
 let tempban = new SubOptionBuilder('tempban').getSubCmd();
+let editban = new SubOptionBuilder('editban').getSubCmd();
 
 /*
 exporting a slashcommandbuilder object. 
@@ -57,11 +58,12 @@ module.exports = {
         .setDescription('Commands to remove unruly users')
         .setDMPermission(false) //make these commands unavailable in direct messages
         .addSubcommand(kick) //start adding subcommands to the root command
-        .addSubcommand(ban)
-        .addSubcommand(unban)
+        .addSubcommand(masskick)
+        .addSubcommand(ban) //bans
         .addSubcommand(tempban)
         .addSubcommand(softban)
-        .addSubcommand(masskick),
+        .addSubcommand(unban) //updating bans
+        .addSubcommand(editban),
     /*Each subcommand requires a different resolution for their options
     interaction.options methods return different things about what happened in the command (i.e. target)*/
     async execute(interaction) {
@@ -145,19 +147,25 @@ module.exports = {
                  */
                 case 'ban':
                     // Check if target is already banned
-                    const bannedUsers = await interaction.guild.bans.fetch();
+/*                     const bannedUsers = await interaction.guild.bans.fetch();
                     if (bannedUsers.get(target.id)) {
                         interaction.reply({ content: `${target} is already banned.`, ephemeral: true });
                         break;
+                    } */
+                    // Check if target is already banned and skip the rest of the case if true
+                    if (await checkIfBanned(interaction, target)) { //dont remove await, it's required or the command hangs here
+                        break;
                     }
                     // Check if target is in the guild so bot can send them a DM
-                    if (interaction.guild.members.cache.has(target.id)) {
-                        await target.send(generateOutputString(cmd_name, interaction, reason))
-                            .catch(() => {
-                                console.log(`${target.id} has DMs closed or blocked the bot`);
-                                // Sending a DM may fail due to a user's privacy settings - ignore errors
-                            });
-                    }
+                    // console.log("shouldn't make this");
+                    // if (interaction.guild.members.cache.has(target.id)) {
+                    //     await target.send(generateOutputString(cmd_name, interaction, reason))
+                    //         .catch(() => {
+                    //             console.log(`${target.id} has DMs closed or blocked the bot`);
+                    //             // Sending a DM may fail due to a user's privacy settings - ignore errors
+                    //         });
+                    // }
+                    await attemptMessageTarget(interaction, target, cmd_name, reason)
                     // User is not already banned - ban them and post in the server
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
                         .then(() => {
@@ -181,10 +189,10 @@ module.exports = {
                  * At the moment the amount of deleted messages is set to the max, but could be variable if the need arises
                  */
                 case 'softban': //T: R
-                    if (!interaction.guild.members.cache.get(target.id)) {
-                        interaction.reply('Invalid ID - user may not be in this server');
+                    if (await checkIfBanned(interaction, target)) { //dont remove await, it's required or the command hangs here
                         break;
                     }
+                    await attemptMessageTarget(interaction, target, cmd_name, reason)
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: 86400, reason: reason })
                         .then(() => {
                             interaction.reply(`**Purged:** <@${target.id}>`);
@@ -214,9 +222,21 @@ module.exports = {
                         });
                     break;
                 case 'editban': //Tar, Dur: Hist, Reason
-                    await interaction.reply('[NYI]');
-                    //ban the target
-                    //update a database of temp-banned users
+                    await interaction.guild.bans.fetch(target)
+                    .then(async () => {
+                        await interaction.guild.members.unban(target)
+                        await interaction.guild.members.ban(target, {reason: reason })
+                            .then(() => {
+                                interaction.reply(`Updated ${target} ban reason: ${reason}`);
+                            })
+                            .catch((err) => {
+                                console.error('Error while editing:', err);
+                                handleError(interaction, err);
+                            });
+                    })
+                    .catch(() => {
+                        interaction.reply({ content: `${target} is not banned.`, ephemeral: true });
+                    });
                 break;
             }
         }
@@ -242,12 +262,48 @@ function checkPermissions(interaction, cmd_name, target, target_ids) {
 }
 
 
+/**
+ * Checks if a target user is already banned in the guild
+ * @param {Interaction} interaction - An interaction object from Discord.js
+ * @param {User} target - The target user the command is being used on
+ * @returns {boolean} True if the target user is banned, false otherwise
+ */
+async function checkIfBanned(interaction, target) {
+    const bannedUsers = await interaction.guild.bans.fetch();
+    if (bannedUsers.get(target.id)) {
+        interaction.reply({ content: `${target} is already banned.`, ephemeral: true });
+        return true; // Target is already banned
+    }
+    return false; // Target is not banned
+}
+
+
+/**
+ * Sends output to the target user if they are a member of the guild
+ * @param {Interaction} interaction - An interaction object from Discord.js
+ * @param {User} target - The target user to send a message to
+ * @param {string} cmd_name - The name of the command
+ * @param {string} reason - The reason for the action (optional)
+ */
+async function attemptMessageTarget(interaction, target, cmd_name, reason) {
+    console.log("reached");
+    if (interaction.guild.members.cache.has(target.id)) {
+        await target.send(generateOutputString(cmd_name, interaction, reason))
+            .catch(() => {
+                console.log(`${target.id} has DMs closed or blocked the bot`);
+                // Sending a DM may fail due to a user's privacy settings - ignore errors
+            });
+    }
+}
+
+
 //add some additional customisation code later if needed
 function handleError(interaction, err) {
     interaction.deleteReply();
     interaction.followUp(`Something went wrong:\n${err.message}`);
     console.error(err);
 }
+
 
 //formats a nice output string that can be DMd to the user
 function generateOutputString(cmd_name, interaction, reason) {
