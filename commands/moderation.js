@@ -1,5 +1,6 @@
 /**
- * @todo nothing!
+ * @todo test kick and ban on higher permissioned user
+ * @todo test masskick 
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
@@ -276,7 +277,11 @@ async function attemptMessageTarget(interaction, target, cmd_name, reason) {
 }
 
 
-//add some additional customisation code later if needed
+/**
+ * Updates the interaction response to display an error
+ * @param {Interaction} interaction - the interaction created by discord.js
+ * @param {error} err - the error object created when a command fails
+ */
 function handleError(interaction, err) {
     interaction.deleteReply();
     interaction.followUp(`Something went wrong:\n${err.message}`);
@@ -284,15 +289,19 @@ function handleError(interaction, err) {
 }
 
 
-//formats a nice output string that can be DMd to the user
+/**
+ * Creates a formatted output string explaining the action taken
+ * @param {string} cmd_name - The name of the command
+ * @param {Interaction} interaction - The interaction object created by discord.js
+ * @param {string} reason - The reaction the command was used
+ * @returns {string} A summary of what the command did and why
+ */
 function generateOutputString(cmd_name, interaction, reason) {
     let actionMessage = '';
-
     if (cmd_name.includes('kick')) {
         actionMessage = 'kicked';
     } else if (cmd_name.includes('ban')) {
         actionMessage = cmd_name + 'ned';
     }
-
     return `You were ${actionMessage} from ${interaction.guild.name}:\n${reason}`;
 }
