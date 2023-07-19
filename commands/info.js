@@ -1,6 +1,6 @@
-/*
-Write new commands which output information pertaining to some entity (server, channel, user) here
-Example commands might include /info user which returns the name and join date of a mentioned person
+/**
+ * @todo - display avatar
+ * @todo - display profile
 */
 
 

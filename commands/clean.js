@@ -1,13 +1,11 @@
-/*
-Write new commands which reverse otherwise tedious/time consuming tasks here
-For example; to remove a user's nickname usually requires:
-- right clicking them
-- selecting "change nickname"
-- selecting "reset nickname"
-- pressing "save"
-Doing this individually for all users is time consuming
-Instead, it has been automated here by simply iterating through the user list.
-This is O(n) in terms of runtime for now, maybe it can be improved - but the key is that it saves moderator time!
+/**
+ * @todo - command which removes all nicknames
+ * @todo - command to list timeouts
+ * @todo - command to remove all timeouts
+ * @todo - command to remove a role from users
+ * @todo - command to purge messages
+ * @todo - command to remove emojis from messages
+ * 
 */
 
 
