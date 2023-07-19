@@ -196,22 +196,28 @@ module.exports = {
 };
 
 
-function filterTargets(targetString){
-    //if (typeof target === 'string') {
-        const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
-        let target_ids = targetString.match(re); //returns an array with the chars in re stripped out
-        // Remove entries with more or fewer than 18 characters
-        target_ids = target_ids.filter(id => id.length === 18);
-        console.log(target_ids);
-        return target_ids;
-        //tar_set = new Set(target_ids); Set O(1) faster than Array O(n) for lookup, but using just a small # of items here so negligible
-    //}
+/**
+ * Removes any non-numerical characters (e.g. formatting, spaces) from a string of userIDs
+ * @param {string} targetString A string object of space-separated IDs to be processed
+ * @returns {Array} A collection of valid 18-digit IDs found in the string
+ */
+function filterTargets(targetString) {
+    const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
+    let target_ids = targetString.match(re); //returns an array of matched identifiers
+    target_ids = target_ids.filter(id => id.length === 18); //a valid ID is 18 characters
+    console.log(target_ids);
+    return target_ids;
 }
 
 
-// checks whether the commands are allowed to process
-// NOTE: this could be more granular. RN if a masskick is performed and one name is the mod, it will fail.
-// could simply remove the target.includes checks and handle it inside the mass command.
+/**
+ * Checks for permissions and that the commands aren't being called on either the client or the caller
+ * @todo this could be more even more specific; rn if a masskick is performed and one name is the mod, it will fail.
+ * @param {Interaction} interaction - the interaction event from discord.js
+ * @param {string} cmd_name - the name of the command
+ * @param {User | Array} target - a User object or an array of IDs
+ * @returns {boolean} whether the command is allowed to be carried out
+ */
 function checkPermissions(interaction, cmd_name, target) {
     const user_perms = interaction.member.permissions;
     const targetIds = Array.isArray(target) ? target : [target.id];
@@ -229,7 +235,7 @@ function checkPermissions(interaction, cmd_name, target) {
     } else if (targetIds.includes(memberUserId)) {
         interaction.reply({ content: "I can't help you Gnome yourself!", ephemeral: true });
     } else {
-        return true; // Only return true if all permission checks pass
+        return true; // Only return true if permission checks pass
     }
     return false; // Return false if any of the permission checks fail
 }
