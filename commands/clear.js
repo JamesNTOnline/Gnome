@@ -36,17 +36,34 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         const cmd_name = interaction.options.getSubcommand();
 
         switch (cmd_name) {
+            /**
+             * @todo this goes through all of the members looking for timeouts right now.
+             *       discord does not provide a way to directly get the timeout list
+             *       idea: look at the audit log? what do timeout events look like?
+             *             member updates -> can i just fetch these and try to get the guildmember as a target?
+             */
             case 'timeouts':
                 try {
-                    const members = await interaction.guild.members.fetch();
-                    members.forEach(member => {
-                        //check permissions else remove timeout
-                        member.timeout(null);
-                    });
-                    interaction.reply('Timeouts cleared!');
+                    let members = await interaction.guild.members.fetch();
+                    let count = 0;
+                        // Filter the members with communicationDisabledUntil value above 0
+                    members = members.filter(member => member.communicationDisabledUntilTimestamp > 0);
+                    await interaction.reply(`Clearing timeouts from ${count}/${members.size} members...`);
+                    for (const member of members.values()) {
+                        // Check permissions else remove timeout
+                        try {
+                            await member.timeout(null);
+                            count++;
+                            await interaction.editReply(`Cleared timeouts from ${count}/${members.size} members...`);
+                        } catch (err) {
+                            // Handle any errors that occur during the timeout process for a member
+                            console.error(`Error clearing timeout for member ${member.user.tag}:`, err);
+                        }
+                    }
+                    await interaction.followUp('Timeouts cleared!');
                 } catch (err) {
-                    interaction.deleteReply();
-                    interaction.followUp('Something went wrong, check audit log');
+                    await interaction.deleteReply();
+                    await interaction.followUp('Something went wrong, check audit log');
                     console.error(err);
                 }
                 break;

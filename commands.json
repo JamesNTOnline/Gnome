@@ -34,16 +34,24 @@
         ]
     },
     {
-        "name": "new-command",
-        "description": "Description for the new command",
+        "name": "emoji",
+        "description": "Commands to update and track emojis",
         "subcommands": [
             {
-            "name": "subcommand1",
-            "description": "Description for subcommand1"
+                "name": "display",
+                "description": "Displays an emoji in a larger size"
             },
             {
-            "name": "subcommand2",
-            "description": "Description for subcommand2"
+                "name": "add",
+                "description": "Adds an emoji to the server"
+            },
+            {
+                "name": "remove",
+                "description": "Removes an emoji from the emoji list"
+            },
+            {
+                "name": "score",
+                "description": "Shows the reaction score for a user"
             }
         ]
     }

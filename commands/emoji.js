@@ -5,31 +5,29 @@
  * @todo display (emoji)
  */
 
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
+const SubOptionBuilder = require('../builders/sub-option-builder.js');
 
-function buildSubCommand(name, desc) { //this should go into a helper file
-    let sub_cmd = new SlashCommandSubcommandBuilder()
-        .setName(name)
-        .setDescription(desc)
-    return sub_cmd;
-}
-
-let display_emoji = buildSubCommand('display', 'displays a custom emoji at a bigger size');
-let add_emoji = buildSubCommand('add', 'adds an emoji using an attachment');
-let del_emoji = buildSubCommand('delete', 'deletes an emoji from the emoji list');
-let react_score = buildSubCommand('score', 'shows the reaction score for a user');
+let displayEmoji = new SubOptionBuilder('display')
+    .getSubCmd();
+let addEmoji = new SubOptionBuilder('add')
+    .getSubCmd();
+let del_emoji = new SubOptionBuilder('delete')
+    .getSubCmd();
+let react_score = new SubOptionBuilder('score')
+    .getSubCmd();
 
 
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: new SlashCommandBuilder()
         .setName('emoji')
         .setDescription('manipulate and retrieve information about emojis')
-        .addSubcommand(display_emoji
+        .addSubcommand(displayEmoji
             .addStringOption(option =>
                 option.setName('emoji')
                     .setDescription('the emoji to display')
                     .setRequired(true)))
-        .addSubcommand(add_emoji
+        .addSubcommand(addEmoji
             .addAttachmentOption(option =>
                 option.setName('attachment')
                     .setDescription('image attachment to add as an emoji')

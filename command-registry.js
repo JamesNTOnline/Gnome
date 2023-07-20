@@ -26,4 +26,8 @@ function getDescription(command) {
     return "Command not found.";
 }
 
+function getOptionDescription(command){
+    
+}
+
 module.exports = { commandsData, getDescription };

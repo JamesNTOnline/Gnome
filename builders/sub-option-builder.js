@@ -31,7 +31,7 @@ class SubOptionBuilder {
         return this; //allows chaining
     }
 
-    
+
     /**
      * Retrieves the subcommand and its options from the optionbuilder
      * @returns {SlashCommandSubcommandBuilder} - the subcommandbuilder object as implemented by discord.js
@@ -49,7 +49,7 @@ class SubOptionBuilder {
         if (this.#builder.name.includes('temp')) {
             this.#builder.addIntegerOption(option =>
                 option.setName('duration')
-                    .setDescription('How long the punishment should last')
+                    .setDescription(`How long the ${this.builder.name} should last`)
                     .setRequired(true));
         }
         return this;
