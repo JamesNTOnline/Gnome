@@ -1,8 +1,8 @@
 /**
- * add (name, attachment)
- * delete (emoji or name)
- * reactscore (user)
- * display (emoji)
+ * @todo add (name, attachment)
+ * @todo delete (emoji or name)
+ * @todo reactscore (user)
+ * @todo display (emoji)
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require('discord.js');

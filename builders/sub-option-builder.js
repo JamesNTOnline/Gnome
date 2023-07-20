@@ -5,25 +5,33 @@ const commandRegistry = require('../command-registry.js');
  * Use this class and its methods to add options onto a subcommand
  */
 class SubOptionBuilder {
-    #builder_name
-    #builder_desc
+    #builderName //dont think this is needed. builder has properties.
+    #builderDesc 
     #builder
 
     constructor(name, description) {
-        this.#builder_name = name;
-        this.#builder_desc = commandRegistry.getDescription(name);
+        this.#builderName  = name; //# - private
+        this.#builderDesc = commandRegistry.getDescription(name);
         this.#builder = new SlashCommandSubcommandBuilder()
             .setName(name)
-            .setDescription(this.#builder_desc);
-        if (name.includes('mass')) {
+            .setDescription(this.#builderDesc );
+    }
+
+
+    /**
+     * Adds a target and reason to the subcommand. typically mod commands always want this, but other commands dont
+     */
+    setupModCommand() {
+        if (this.#builder.name.includes('mass')) {
             this.addMassUserOption();
         } else {
             this.addTargetUserOption();
         }
         this.addReasonOption();
+        return this; //allows chaining
     }
 
-
+    
     /**
      * Retrieves the subcommand and its options from the optionbuilder
      * @returns {SlashCommandSubcommandBuilder} - the subcommandbuilder object as implemented by discord.js
@@ -44,6 +52,7 @@ class SubOptionBuilder {
                     .setDescription('How long the punishment should last')
                     .setRequired(true));
         }
+        return this;
     }
 
 
@@ -53,9 +62,10 @@ class SubOptionBuilder {
     addMassUserOption() {
         this.#builder.addStringOption(option =>
             option.setName('targets')
-                .setDescription(`Users to ${this.#builder_name}, by @mention or 18-digit ID`)
+                .setDescription(`Users to ${this.#builder.name }, by @mention or 18-digit ID`)
                 .setMaxLength(115)
                 .setRequired(true));
+                return this;
     }
 
 
@@ -66,8 +76,9 @@ class SubOptionBuilder {
     addTargetUserOption() {
         this.#builder.addUserOption(option =>
             option.setName('target')
-                .setDescription(`Mention or ID of user to ${this.#builder_name}`)
+                .setDescription(`Mention or ID of user to ${this.#builder.name }`)
                 .setRequired(true));
+                return this;
     }
 
 
@@ -75,6 +86,15 @@ class SubOptionBuilder {
     * Adds an option to a command builder representing the reason a user is being removed
     */
     addReasonOption() {
+        const isBanCommand = this.#builder.name.includes('ban');
+        this.#builder.addStringOption(option =>
+            option.setName('reason')
+                .setDescription('The behavior the user is being punished for')
+                .setMaxLength(512)
+                .setRequired(isBanCommand));
+        return this;
+    }
+/*     addReasonOption() {
         let required = false; //refactor this
         if (this.#builder.name.includes('ban')) { //ban commands should always have a reason (why? they have permanent effects)
             required = true;
@@ -84,7 +104,7 @@ class SubOptionBuilder {
                 .setDescription('The behaviour the user is being punished for')
                 .setMaxLength(512)
                 .setRequired(required));
-    }
+    } */
 
 
     /**
@@ -103,6 +123,7 @@ class SubOptionBuilder {
                 )
                 .setMinValue(0)
                 .setMaxValue(604800));
+        return this;
     }
 
 }

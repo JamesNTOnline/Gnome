@@ -8,16 +8,28 @@ const SubOptionBuilder = require('../builders/sub-option-builder.js');
 
 /* commands are more or less "modular" and can have any types of options added. A finished cmd is retrieved using getSubCmd()
 ALL *REQUIRED* OPTIONS *MUST* COME BEFORE OPTIONALS */
-let kick = new SubOptionBuilder('kick').getSubCmd();
-//build ban cmd - add a delete option and then get the command
-let banbuilder = new SubOptionBuilder('ban');
-banbuilder.addDeleteOption();
-let ban = banbuilder.getSubCmd(); //look at why i need to do this
-let unban = new SubOptionBuilder('unban').getSubCmd();
-let softban = new SubOptionBuilder('softban').getSubCmd();
-let masskick = new SubOptionBuilder('masskick').getSubCmd();
-let tempban = new SubOptionBuilder('tempban').getSubCmd();
-let editban = new SubOptionBuilder('editban').getSubCmd();
+let kick = new SubOptionBuilder('kick')
+    .setupModCommand()
+    .getSubCmd();
+let ban = new SubOptionBuilder('ban')
+    .setupModCommand()
+    .addDeleteOption()
+    .getSubCmd();
+let unban = new SubOptionBuilder('unban')
+    .setupModCommand()
+    .getSubCmd();
+let softban = new SubOptionBuilder('softban')
+    .setupModCommand()
+    .getSubCmd();
+let masskick = new SubOptionBuilder('masskick')
+    .setupModCommand()
+    .getSubCmd();
+let tempban = new SubOptionBuilder('tempban')
+    .setupModCommand()
+    .getSubCmd();
+let editban = new SubOptionBuilder('editban')
+    .setupModCommand()
+    .getSubCmd();
 
 /*
 exporting a slashcommandbuilder object. 
