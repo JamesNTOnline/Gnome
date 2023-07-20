@@ -97,6 +97,10 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                         interaction.editReply('An error occurred while processing the command.');
                     });
                 break;
+            case 'role':
+                //
+                break;
+            
 
 
         }
