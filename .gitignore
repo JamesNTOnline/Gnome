@@ -89,3 +89,6 @@ notes.md
 botconfig.json
 .env
 node_modules
+Procfile
+.vs
+.vscode
