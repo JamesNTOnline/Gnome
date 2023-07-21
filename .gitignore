@@ -90,5 +90,5 @@ botconfig.json
 .env
 node_modules
 Procfile
-.vs
-.vscode
+**/.vscode/
+**/.vs/
