@@ -5,7 +5,19 @@
         "subcommands": [
             {
                 "name": "kick",
-                "description": "Kicks a user, allows rejoining"
+                "description": "Kicks a user, allows rejoining",
+                "options": [
+                    {
+                        "name": "user",
+                        "description": "This could be an example of how to do dynamic command generation",
+                        "how": "use the json present to determine which option functions to call on an object",
+                        "maxlength": 100,
+                        "required": true
+                    },
+                    {
+
+                    }
+                ]
             },
             {
                 "name": "ban",
@@ -52,6 +64,32 @@
             {
                 "name": "score",
                 "description": "Shows the reaction score for a user"
+            }
+        ]
+    },
+    {
+        "name": "clear",
+        "description": "Commands to tidy up the server and users",
+        "subcommands": [
+            {
+                "name": "timeouts",
+                "description": "Cancels of the current timeouts"
+            },
+            {
+                "name": "nicknames",
+                "description": "Clears all nicknames from server members"
+            },
+            {
+                "name": "bans",
+                "description": "Empties the ban list"
+            },
+            {
+                "name": "reactions",
+                "description": "Removes reactions from recent posts"
+            },
+            {
+                "name": "messages",
+                "description": "Deletes a specified number of messages (default 10)"
             }
         ]
     }

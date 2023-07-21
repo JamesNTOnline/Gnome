@@ -2,6 +2,13 @@ const { SlashCommandSubcommandBuilder } = require("discord.js");
 const commandRegistry = require('../command-registry.js');
 
 /**
+ * I have a different idea for how to handle this. More of a long-term/if the project gets larger goal
+ * I want to make the api function calls dynamic and simply store every each command and its options as json
+ * This would make setting up a subcommand object as simple as adding it to the json file, but means rewriting some of the existing code
+ * tl;dr: @todo change how command setup works
+ */
+
+/**
  * Use this class and its methods to add options onto a subcommand
  */
 class SubOptionBuilder {
