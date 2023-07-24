@@ -89,7 +89,7 @@
             },
             {
                 "name": "messages",
-                "description": "Deletes a specified number of messages (default 10)"
+                "description": "Deletes a specified number of messages (default 5)"
             }
         ]
     }

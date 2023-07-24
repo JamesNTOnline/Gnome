@@ -60,7 +60,8 @@ module.exports = {
                         await member.setNickname(null);
                     });
                     break;
-                case 'bans':
+                case 'bans': //processMembers could handle this.
+                // pass in the list to the function instead
                     await interaction.reply('Starting to clear the ban list...')
                         .then(async () => {
                             const bans = await interaction.guild.bans.fetch();
@@ -92,7 +93,34 @@ module.exports = {
                     //
                     break;
                 case 'messages':
-                    //
+                    await interaction.reply('Purging messages...')
+                        .then(async () => {
+                            const num = interaction.options.getNumber('amount') ?? 5;
+                            const botUserId = interaction.client.user.id;
+                            const memberUserId = interaction.member.user.id;
+                            const messages = await interaction.channel.messages.fetch({ limit: 75 }); //max 100
+                            //userMsgs = messages.filter(message => message.author.id !== interaction.client.user.id && message.author.id !== interaction.member.id);
+                            let count = 0;
+                            for (const msg of messages.values()) {
+                                if (count >= num) break;
+                                if (msg.author.id !== botUserId && msg.author.id !== memberUserId) {
+                                    await msg.delete()
+                                        .then(async () => {
+                                            count++;
+                                            await interaction.editReply(`Deleted ${count} messages`);
+                                        })
+                                        .catch((err) => {
+                                            console.error('Error while deleting:', err);
+                                        });
+                                }
+                            }
+                            await interaction.followUp(`Finished!`);
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            interaction.deleteReply();
+                            interaction.followUp('Something went wrong, check audit log');
+                        })
                     break;
 
 
