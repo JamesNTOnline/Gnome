@@ -88,6 +88,10 @@
                 "description": "Removes reactions from recent posts"
             },
             {
+                "name": "bot",
+                "description": "Cleans up messages posted by the bot"
+            },
+            {
                 "name": "messages",
                 "description": "Deletes a specified number of messages (default 5)"
             }

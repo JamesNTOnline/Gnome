@@ -289,7 +289,7 @@ async function attemptMessageTarget(interaction, target, cmd_name, reason) {
 }
 
 
-/**
+/** DUPLICATE EXTRACT TO A MODULE
  * Updates the interaction response to display an error
  * @param {Interaction} interaction - the interaction created by discord.js
  * @param {error} err - the error object created when a command fails
