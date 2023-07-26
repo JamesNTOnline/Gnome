@@ -17,6 +17,9 @@ let nicknames = new SubOptionBuilder('nicknames').getSubCmd();
 let bans = new SubOptionBuilder('bans').getSubCmd();
 let reactions = new SubOptionBuilder('reactions').getSubCmd();
 let bot = new SubOptionBuilder('bot').getSubCmd();
+let purge = new SubOptionBuilder('purge')
+    .addTargetUserOption()
+    .getSubCmd();
 let messages = new SubOptionBuilder('messages').getSubCmd()
     .addNumberOption(option =>
         option.setName('amount')
@@ -35,6 +38,7 @@ module.exports = {
         .addSubcommand(bans)
         .addSubcommand(reactions)
         .addSubcommand(bot)
+        .addSubcommand(purge)
         .addSubcommand(messages),
 
     async execute(interaction) {
@@ -103,7 +107,18 @@ module.exports = {
                     })
                     .catch(err=>{
                         handleError(interaction, err);
-                    })
+                    });
+                    break;
+                case 'purge': //we need to reply first. causing problems.
+                    const target = interaction.options.getUser('target');
+                    const purgeMsgFilter = (msg) => msg.author.id === target.id
+                    await interaction.channel.messages.fetch({limit: 100})
+                        .then(async (messages)=> {
+                            await processMessages(interaction, purgeMsgFilter, 100, messages);
+                        })
+                        .catch(err =>{
+                            handleError(interaction, err);
+                        });
                     break;
                 case 'messages':
                     const userMsgFilter = (msg) => msg.author.id !== botUserId && msg.author.id !== memberUserId;
@@ -114,7 +129,7 @@ module.exports = {
                         })
                         .catch(err => {
                             handleError(interaction, err);
-                        })
+                        });
                     break;
 
 

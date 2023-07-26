@@ -92,6 +92,11 @@
                 "description": "Cleans up messages posted by the bot"
             },
             {
+                "name": "purge",
+                "description": "Deletes recent messages from a specified user"
+
+            },
+            {
                 "name": "messages",
                 "description": "Deletes a specified number of messages (default 5)"
             }
