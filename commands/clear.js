@@ -103,36 +103,16 @@ module.exports = {
                 case 'bot':
                     const botMsgFilter = (msg) => msg.author.id === botUserId; //this code is kinda duplicate
                     filterMessages(interaction, botMsgFilter, async (msg) => msg.delete());
-                    // .then(async (messages) =>{
-                    //     await processMessages(interaction, botMsgFilter, 100, messages);
-                    // })
-                    // .catch(err=>{
-                    //     handleError(interaction, err);
-                    // });
                     break;
                 case 'purge': //we need to reply first. causing problems.
                     const target = interaction.options.getUser('target');
                     const purgeMsgFilter = (msg) => msg.author.id === target.id
                     filterMessages(interaction, purgeMsgFilter, async (msg) => msg.delete());
-                    // await interaction.channel.messages.fetch({limit: 100})
-                    //     .then(async (messages)=> {
-                    //         await processMessages(interaction, purgeMsgFilter, 100, messages);
-                    //     })
-                    //     .catch(err =>{
-                    //         handleError(interaction, err);
-                    //     });
                     break;
                 case 'messages':
                     const userMsgFilter = (msg) => msg.author.id !== botUserId && msg.author.id !== memberUserId;
                     const amount = interaction.options.getNumber('amount') ?? 5;
                     filterMessages(interaction, userMsgFilter, async (msg) => msg.delete(), amount);
-                    // await interaction.channel.messages.fetch({ limit: 100 }) //max 100
-                    //     .then(async (messages) => {
-                    //         await processMessages(interaction, userMsgFilter, amount, messages);
-                    //     })
-                    //     .catch(err => {
-                    //         handleError(interaction, err);
-                    //     });
                     break;
 
 
