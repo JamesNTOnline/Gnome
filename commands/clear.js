@@ -1,11 +1,8 @@
 /**
- * @todo - command which removes all nicknames
  * @todo - command to list timeouts
- * @todo - command to remove all timeouts
  * @todo - command to remove a role from users
- * @todo - command to purge messages
- * @todo - command to remove emojis from messages
  * @todo - a more robust permission check
+ * @todo - need to make sure pinned messages don't get changed
  * @todo - don't try to alter non-moderatable members
 */
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
@@ -17,9 +14,16 @@ let nicknames = new SubOptionBuilder('nicknames').getSubCmd();
 let bans = new SubOptionBuilder('bans').getSubCmd();
 let reactions = new SubOptionBuilder('reactions').getSubCmd();
 let bot = new SubOptionBuilder('bot').getSubCmd();
+let role = new SubOptionBuilder('role').getSubCmd()
+    .addRoleOption(option =>
+        option.setName('role')
+            .setDescription('The role to remove from all members')
+            .setRequired(true));
+
 let purge = new SubOptionBuilder('purge')
     .addTargetUserOption()
     .getSubCmd();
+
 let messages = new SubOptionBuilder('messages').getSubCmd()
     .addNumberOption(option =>
         option.setName('amount')
@@ -36,6 +40,7 @@ module.exports = {
         .addSubcommand(timeouts)
         .addSubcommand(nicknames)
         .addSubcommand(bans)
+        .addSubcommand(role)
         .addSubcommand(reactions)
         .addSubcommand(bot)
         .addSubcommand(purge)
@@ -96,6 +101,9 @@ module.exports = {
                             interaction.followUp('Something went wrong, check audit log');
                         });
                     break;
+                case 'role':
+                    console.log('NYI');
+                    break;
                 case 'reactions':
                     const reactMsgFilter = (msg) => msg.reactions.cache.size > 0; //this code is kinda duplicate
                     filterMessages(interaction, reactMsgFilter, async (msg) => msg.reactions.removeAll());
@@ -122,30 +130,54 @@ module.exports = {
 };
 
 
-async function filterMessages(interaction, conditionCallback, processFunction, amount = 100) {
-    await interaction.reply('Processing messages...')
-        .then(() => interaction.channel.messages.fetch({ limit: 100 }))
-        .then(async (messages) => {
-            const fetchedReply = await interaction.fetchReply();
-            let count = 0;
-            for (const msg of messages.values()) {
-                if (count >= amount) break;
-                if (msg.id !== fetchedReply.id && conditionCallback(msg)) {
-                    await processFunction(msg)
-                        .then(async () => {
-                            count++;
-                            await interaction.editReply(`Processed ${count} messages...`);
-                        })
-                        .catch((err) => {
-                            console.error('Error while processing:', err);
-                        });
+// async function filterMessages(interaction, conditionCallback, processFunction, amount = 100) {
+//     await interaction.reply('Processing messages...')
+//         .then(async () => await interaction.channel.messages.fetch({ limit: 100 }))
+//         .then(async (messages) => {
+//             const fetchedReply = await interaction.fetchReply();
+//             let count = 0;
+//             for (const msg of messages.values()) {
+//                 if (count >= amount) break;
+//                 if (msg.id !== fetchedReply.id && conditionCallback(msg)) {
+//                     await processFunction(msg)
+//                         .then(async () => {
+//                             count++;
+//                             await interaction.editReply(`Processed ${count} messages...`);
+//                         })
+//                         .catch((err) => {
+//                             console.error('Error while processing:', err);
+//                         });
+//                 }
+//             }
+//             await interaction.editReply(`Finished: Processed ${count} messages!`);
+//         })
+//         .catch((err) => {
+//             handleError(interaction, err);
+//         });
+// }
+
+async function filterMessages(interaction, conditionCallback, processFunction, amount = 10) {
+    let count = 0;
+    try {
+        const reply = await interaction.reply({content: 'Processing messages...', fetchReply: true});
+        const messages = await interaction.channel.messages.fetch({ limit: 100 });
+        //const fetchedReply = await interaction.fetchReply();
+        for (const msg of messages.values()) {
+            if (count >= amount) break;
+            if (msg.id !== reply.id && conditionCallback(msg)) {
+                try {
+                    await processFunction(msg);
+                    count++;
+                    await interaction.editReply(`Processed ${count} messages...`);
+                } catch (err) {
+                    console.error('Error while processing:', err);
                 }
             }
-            await interaction.editReply(`Finished: Processed ${count} messages!`);
-        })
-        .catch((err) => {
-            handleError(interaction, err);
-        });
+        }
+        await interaction.editReply(`Finished: Processed ${count} messages!`);
+    } catch (err) {
+        handleError(interaction, err);
+    }
 }
 
 
