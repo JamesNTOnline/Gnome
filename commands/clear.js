@@ -102,7 +102,16 @@ module.exports = {
                         });
                     break;
                 case 'role':
-                    console.log('NYI');
+                    const role = interaction.options.getRole('role');
+                    const roleFilter = (member) => member.roles.cache.has(role.id);
+                    processMembers(cmdName, interaction, roleFilter, async (member) => {
+                        try {
+                            // Discord API function to remove the role from the member
+                            await member.roles.remove(role);
+                        } catch (err) {
+                            console.error(`Error removing role ${role.name} from member ${member.user.tag}:`, err);
+                        }
+                    });
                     break;
                 case 'reactions':
                     const reactMsgFilter = (msg) => msg.reactions.cache.size > 0; //this code is kinda duplicate
@@ -210,22 +219,22 @@ async function filterMessages(interaction, conditionCallback, processFunction, a
  */
 async function processMembers(cmdName, interaction, conditionCallback, functionToCall) {
     try {
+        await interaction.reply(`Processing ${cmdName}...`);
         const members = await interaction.guild.members.fetch();
         const targetMembers = members.filter(conditionCallback);
         const totalCount = targetMembers.size;
-        await interaction.reply(`Processing ${cmdName} for 0/${totalCount} members...`);
         let count = 0;
         for (const member of targetMembers.values()) {
             try {
                 // process members with a member function
                 await functionToCall(member);
                 count++;
-                await interaction.editReply(`Processed ${cmdName} for ${count}/${totalCount} members...`);
+                await interaction.editReply(`Processed ${cmdName} for ${count}/${totalCount} members`);
             } catch (err) {
                 console.error(`Error during processing ${cmdName} for member ${member.user.tag}:`, err);
             }
         }
-        await interaction.editReply(`${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)} cleared!`);
+        await interaction.editReply(`${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)} cleared.`);
     } catch (err) {
         handleError(interaction, err);
     }

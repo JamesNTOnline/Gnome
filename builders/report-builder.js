@@ -23,3 +23,5 @@
     }
     return embed;
 } */
+
+function buildMentionableEmbed(interaction, cmd_name, mentionableTarget)
