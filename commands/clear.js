@@ -139,31 +139,6 @@ module.exports = {
 };
 
 
-// async function filterMessages(interaction, conditionCallback, processFunction, amount = 100) {
-//     await interaction.reply('Processing messages...')
-//         .then(async () => await interaction.channel.messages.fetch({ limit: 100 }))
-//         .then(async (messages) => {
-//             const fetchedReply = await interaction.fetchReply();
-//             let count = 0;
-//             for (const msg of messages.values()) {
-//                 if (count >= amount) break;
-//                 if (msg.id !== fetchedReply.id && conditionCallback(msg)) {
-//                     await processFunction(msg)
-//                         .then(async () => {
-//                             count++;
-//                             await interaction.editReply(`Processed ${count} messages...`);
-//                         })
-//                         .catch((err) => {
-//                             console.error('Error while processing:', err);
-//                         });
-//                 }
-//             }
-//             await interaction.editReply(`Finished: Processed ${count} messages!`);
-//         })
-//         .catch((err) => {
-//             handleError(interaction, err);
-//         });
-// }
 
 async function filterMessages(interaction, conditionCallback, processFunction, amount = 10) {
     let count = 0;
@@ -189,26 +164,6 @@ async function filterMessages(interaction, conditionCallback, processFunction, a
     }
 }
 
-
-// async function processMessages(interaction, conditionCallback, amount, messages) {
-//     await interaction.reply('Deleting messages...');
-//     //userMsgs = messages.filter(message => message.author.id !== interaction.client.user.id && message.author.id !== interaction.member.id);
-//     let count = 0;
-//     for (const msg of messages.values()) {
-//         if (count >= amount) break;
-//         if (conditionCallback(msg)) {
-//             await msg.delete()
-//                 .then(async () => {
-//                     count++;
-//                     await interaction.editReply(`Deleting ${count} messages...`);
-//                 })
-//                 .catch((err) => {
-//                     console.error('Error while deleting:', err);
-//                 });
-//         }
-//     }
-//     await interaction.editReply(`Finished: Deleted ${count} messages!`);
-// }
 
 /**
  * 
