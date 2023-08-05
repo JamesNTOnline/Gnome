@@ -1,6 +1,6 @@
 /**
- * @todo - command to list timeouts
- * @todo - command to remove a role from users
+ * @todo - 
+ * @todo - 
  * @todo - a more robust permission check
  * @todo - need to make sure pinned messages don't get changed
  * @todo - don't try to alter non-moderatable members
@@ -8,23 +8,22 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const SubOptionBuilder = require('../builders/sub-option-builder');
 
-
+//server tidy-up commands
 let timeouts = new SubOptionBuilder('timeouts').getSubCmd();
 let nicknames = new SubOptionBuilder('nicknames').getSubCmd();
 let bans = new SubOptionBuilder('bans').getSubCmd();
-let reactions = new SubOptionBuilder('reactions').getSubCmd();
-let bot = new SubOptionBuilder('bot').getSubCmd();
 let role = new SubOptionBuilder('role').getSubCmd()
     .addRoleOption(option =>
         option.setName('role')
             .setDescription('The role to remove from all members')
             .setRequired(true));
-
-let purge = new SubOptionBuilder('purge')
+//message clearing commands
+let reactions = new SubOptionBuilder('reactions').getSubCmd();
+let bot = new SubOptionBuilder('bot').getSubCmd();
+let purge = new SubOptionBuilder('user')
     .addTargetUserOption()
     .getSubCmd();
-
-let messages = new SubOptionBuilder('messages').getSubCmd()
+let all = new SubOptionBuilder('all').getSubCmd()
     .addNumberOption(option =>
         option.setName('amount')
             .setDescription('The number of messages to delete')
@@ -44,13 +43,14 @@ module.exports = {
         .addSubcommand(reactions)
         .addSubcommand(bot)
         .addSubcommand(purge)
-        .addSubcommand(messages),
+        .addSubcommand(all),
 
     async execute(interaction) {
         const cmdName = interaction.options.getSubcommand();
         const botUserId = interaction.client.user.id;
         const memberUserId = interaction.member.user.id;
         const user_perms = interaction.member.permissions;
+        let filterCondition;
         if (user_perms.has(PermissionsBitField.Flags.Administrator)) {
             switch (cmdName) {
                 /**
@@ -58,53 +58,58 @@ module.exports = {
                  * idea: look at the properties of the users and filter them before manipulating them
                  */
                 case 'timeouts':
-                    //anon function to filter
-                    const timeoutFilter = (member) => member.communicationDisabledUntilTimestamp > 0 && member.manageable;
-                    processMembers(cmdName, interaction, timeoutFilter, async (member) => {
-                        // Discord API function to apply a null timeout (removes timeout)
-                        await member.timeout(null);
+                    // An anonymous function to filter members based on timeout status
+                    filterCondition = (member) => member.communicationDisabledUntilTimestamp > 0 && member.manageable;
+                    actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
+                        try {
+                            // Discord API function to apply a null timeout (removes timeout)
+                            await member.timeout(null);
+                        } catch (err) {
+                            console.error(`Error removing timeout for member ${member.user.tag}:`, err);
+                        }
                     });
                     break;
                 case 'nicknames':
-                    const nickFilter = (member) => member.nickname !== null && member.manageable;
-                    processMembers(cmdName, interaction, nickFilter, async (member) => {
-                        // null removes nickname
-                        await member.setNickname(null);
+                    filterCondition = (member) => member.nickname !== null && member.manageable;
+                    actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
+                        try {
+                            // null removes nickname
+                            await member.setNickname(null);
+                        } catch (err) {
+                            console.error(`Error setting nickname to null for member ${member.user.tag}:`, err);
+                        }
                     });
                     break;
-                case 'bans': //processMembers could handle this.
-                    // pass in the list to the function instead
-                    await interaction.reply('Starting to clear the ban list...')
-                        .then(async () => {
-                            const bans = await interaction.guild.bans.fetch();
-                            const banCount = bans.size;
-                            if (banCount === 0) {
-                                await interaction.editReply('No members are banned in this server.');
-                                return;
+                case 'bans': //unique behaviour because it operates on the guildbanmanager, not a member object
+                    try {
+                        await interaction.reply('Starting to clear the ban list...');
+                        const bans = await interaction.guild.bans.fetch();
+                        const banCount = bans.size;
+                        if (banCount === 0) {
+                            await interaction.editReply('No members are banned in this server.');
+                            return;
+                        }
+                        let count = 0;
+                        for (const ban of bans.values()) {
+                            try {
+                                await interaction.guild.members.unban(ban.user);
+                                count++;
+                                await interaction.editReply(`Unbanned ${ban.user}: ${count}/${banCount} completed`);
+                            } catch (err) {
+                                console.error('Error while unbanning:', err);
                             }
-                            let count = 0;
-                            for (const ban of bans.values()) {
-                                await interaction.guild.members.unban(ban.user)
-                                    .then(async () => {
-                                        count++;
-                                        await interaction.editReply(`Unbanned ${ban.user}: ${count}/${banCount} completed`);
-                                    })
-                                    .catch((err) => {
-                                        console.error('Error while unbanning:', err);
-                                    });
-                            }
-                            await interaction.followUp(`Finished!`);
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            interaction.deleteReply();
-                            interaction.followUp('Something went wrong, check audit log');
-                        });
+                        }
+                        await interaction.followUp('Finished!');
+                    } catch (err) {
+                        console.error(err);
+                        await interaction.deleteReply();
+                        await interaction.followUp('Something went wrong, check audit log');
+                    }
                     break;
                 case 'role':
                     const role = interaction.options.getRole('role');
-                    const roleFilter = (member) => member.roles.cache.has(role.id);
-                    processMembers(cmdName, interaction, roleFilter, async (member) => {
+                    filterCondition = (member) => member.roles.cache.has(role.id);
+                    actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
                         try {
                             // Discord API function to remove the role from the member
                             await member.roles.remove(role);
@@ -114,25 +119,23 @@ module.exports = {
                     });
                     break;
                 case 'reactions':
-                    const reactMsgFilter = (msg) => msg.reactions.cache.size > 0; //this code is kinda duplicate
-                    filterMessages(interaction, reactMsgFilter, async (msg) => msg.reactions.removeAll());
+                    filterCondition = (msg) => msg.reactions.cache.size > 0; //this code is kinda duplicate
+                    actionFilteredMessages(interaction, filterCondition, async (msg) => msg.reactions.removeAll());
                     break;
                 case 'bot':
-                    const botMsgFilter = (msg) => msg.author.id === botUserId; //this code is kinda duplicate
-                    filterMessages(interaction, botMsgFilter, async (msg) => msg.delete());
+                    filterCondition = (msg) => msg.author.id === botUserId; //this code is kinda duplicate
+                    actionFilteredMessages(interaction, filterCondition, async (msg) => msg.delete());
                     break;
-                case 'purge': //we need to reply first. causing problems.
+                case 'user': //we need to reply first. causing problems.
                     const target = interaction.options.getUser('target');
-                    const purgeMsgFilter = (msg) => msg.author.id === target.id
-                    filterMessages(interaction, purgeMsgFilter, async (msg) => msg.delete());
+                    filterCondition = (msg) => msg.author.id === target.id
+                    actionFilteredMessages(interaction, filterCondition, async (msg) => msg.delete());
                     break;
-                case 'messages':
-                    const userMsgFilter = (msg) => msg.author.id !== botUserId && msg.author.id !== memberUserId;
+                case 'all':
                     const amount = interaction.options.getNumber('amount') ?? 5;
-                    filterMessages(interaction, userMsgFilter, async (msg) => msg.delete(), amount);
+                    filterCondition = (msg) => msg.author.id !== botUserId && msg.author.id !== memberUserId;
+                    actionFilteredMessages(interaction, filterCondition, async (msg) => msg.delete(), amount);
                     break;
-
-
             }
         }
     },
@@ -140,17 +143,26 @@ module.exports = {
 
 
 
-async function filterMessages(interaction, conditionCallback, processFunction, amount = 10) {
-    let count = 0;
+/**
+ * @todo - extend this with pagination?
+ * 
+ * Applies an action to filtered message objects in a channel.
+ * @param {Interaction} interaction - The interaction object from discord.js
+ * @param {Function} messageFilter - A function used to filter messages
+ * @param {Function} messageAction - The function to be called for each filtered (included) message
+ * @param {number} amount - The maximum number of messages to process (default: 10)
+ */
+async function actionFilteredMessages(interaction, messageFilter, messageAction, amount = 10) {
+    let count = 0; // Counter to track the number of processed messages
     try {
-        const reply = await interaction.reply({content: 'Processing messages...', fetchReply: true});
+        // need to access this reply later to not delete it
+        const reply = await interaction.reply({ content: 'Processing messages...', fetchReply: true });
         const messages = await interaction.channel.messages.fetch({ limit: 100 });
-        //const fetchedReply = await interaction.fetchReply();
-        for (const msg of messages.values()) {
+        for (const message of messages.values()) {
             if (count >= amount) break;
-            if (msg.id !== reply.id && conditionCallback(msg)) {
+            if (message.id !== reply.id && messageFilter(message)) {
                 try {
-                    await processFunction(msg);
+                    await messageAction(message); // Apply the action to the filtered message
                     count++;
                     await interaction.editReply(`Processed ${count} messages...`);
                 } catch (err) {
@@ -160,40 +172,42 @@ async function filterMessages(interaction, conditionCallback, processFunction, a
         }
         await interaction.editReply(`Finished: Processed ${count} messages!`);
     } catch (err) {
-        handleError(interaction, err);
+        handleError(interaction, err); 
     }
 }
 
 
+
 /**
- * 
- * @param {string} cmdName - The name of the command
+ * Applies a funcion to filtered member objects
+ * @param {string} commandName - The name of the command being executed
  * @param {Interaction} interaction - The interaction object from discord.js
- * @param {Function} conditionCallback - A function which filters the guildmember list
- * @param {Function} functionToCall - The function to be called for each filtered (included) member
+ * @param {Function} filterFunction - A function used to filter the guild member list
+ * @param {Function} actionFunction - The function to be called for each filtered (included) member
  */
-async function processMembers(cmdName, interaction, conditionCallback, functionToCall) {
+async function actionFilteredMembers(commandName, interaction, filterFunction, actionFunction) {
     try {
-        await interaction.reply(`Processing ${cmdName}...`);
+        await interaction.reply(`Processing ${commandName}...`);
         const members = await interaction.guild.members.fetch();
-        const targetMembers = members.filter(conditionCallback);
+        const targetMembers = members.filter(filterFunction);
         const totalCount = targetMembers.size;
         let count = 0;
         for (const member of targetMembers.values()) {
             try {
-                // process members with a member function
-                await functionToCall(member);
+                // Process members with a member function
+                await actionFunction(member);
                 count++;
-                await interaction.editReply(`Processed ${cmdName} for ${count}/${totalCount} members`);
+                await interaction.editReply(`Processed ${commandName} for ${count}/${totalCount} members`);
             } catch (err) {
-                console.error(`Error during processing ${cmdName} for member ${member.user.tag}:`, err);
+                console.error(`Error during processing ${commandName} for member ${member.user.tag}:`, err);
             }
         }
-        await interaction.editReply(`${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)} cleared.`);
+        await interaction.editReply(`${commandName.charAt(0).toUpperCase() + commandName.slice(1)} cleared.`);
     } catch (err) {
         handleError(interaction, err);
     }
 }
+
 
 /** DUPLICATE EXTRACT TO A MODULE
  * Updates the interaction response to display an error
