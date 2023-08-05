@@ -62,8 +62,7 @@ module.exports = {
                     filterCondition = (member) => member.communicationDisabledUntilTimestamp > 0 && member.manageable;
                     actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
                         try {
-                            // Discord API function to apply a null timeout (removes timeout)
-                            await member.timeout(null);
+                            await member.timeout(null); //null removes timeout
                         } catch (err) {
                             console.error(`Error removing timeout for member ${member.user.tag}:`, err);
                         }
@@ -73,8 +72,7 @@ module.exports = {
                     filterCondition = (member) => member.nickname !== null && member.manageable;
                     actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
                         try {
-                            // null removes nickname
-                            await member.setNickname(null);
+                            await member.setNickname(null); // null removes nickname
                         } catch (err) {
                             console.error(`Error setting nickname to null for member ${member.user.tag}:`, err);
                         }
@@ -111,7 +109,6 @@ module.exports = {
                     filterCondition = (member) => member.roles.cache.has(role.id);
                     actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
                         try {
-                            // Discord API function to remove the role from the member
                             await member.roles.remove(role);
                         } catch (err) {
                             console.error(`Error removing role ${role.name} from member ${member.user.tag}:`, err);
