@@ -56,7 +56,7 @@ class SubOptionBuilder {
         if (this.#builder.name.includes('temp')) {
             this.#builder.addIntegerOption(option =>
                 option.setName('duration')
-                    .setDescription(`How long the ${this.builder.name} should last`)
+                    .setDescription(`How long the command should last`)
                     .setRequired(true));
         }
         return this;
@@ -69,7 +69,7 @@ class SubOptionBuilder {
     addMassUserOption() {
         this.#builder.addStringOption(option =>
             option.setName('targets')
-                .setDescription(`Users to ${this.#builder.name }, by @mention or 18-digit ID`)
+                .setDescription(`A list of users by @mention or 18-digit IDs`)
                 .setMaxLength(115)
                 .setRequired(true));
                 return this;
@@ -83,7 +83,7 @@ class SubOptionBuilder {
     addTargetUserOption() {
         this.#builder.addUserOption(option =>
             option.setName('target')
-                .setDescription(`Mention or ID of user to ${this.#builder.name }`)
+                .setDescription(`The @mention or 18 digit ID of a user`)
                 .setRequired(true));
                 return this;
     }
@@ -96,22 +96,11 @@ class SubOptionBuilder {
         const isBanCommand = this.#builder.name.includes('ban');
         this.#builder.addStringOption(option =>
             option.setName('reason')
-                .setDescription('The behavior the user is being punished for')
+                .setDescription('The reason for the command being used')
                 .setMaxLength(512)
                 .setRequired(isBanCommand));
         return this;
     }
-/*     addReasonOption() {
-        let required = false; //refactor this
-        if (this.#builder.name.includes('ban')) { //ban commands should always have a reason (why? they have permanent effects)
-            required = true;
-        }
-        this.#builder.addStringOption(option =>
-            option.setName('reason')
-                .setDescription('The behaviour the user is being punished for')
-                .setMaxLength(512)
-                .setRequired(required));
-    } */
 
 
     /**
@@ -120,7 +109,7 @@ class SubOptionBuilder {
     addDeleteOption() {
         this.#builder.addIntegerOption(option =>
             option.setName('delete')
-                .setDescription('Number of days worth of messages to purge')
+                .setDescription('How many days\' worth of messages to delete')
                 .addChoices(
                     //0, 6, 12, 24, 72, 168 hrs in seconds
                     { name: 'Don\'t delete any', value: 0 },

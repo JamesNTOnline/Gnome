@@ -1,6 +1,8 @@
 /**
  * @todo - display avatar
  * @todo - display profile
+ * @todo - display timeouts
+ * @todo - display bot status (ping)
 */
 
 
@@ -11,7 +13,7 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: new SlashCommandBuilder()
         .setName('info')
-        .setDescription('ph'),
+        .setDescription('Displays some information about something in the server'),
     async execute(interaction){
         await interaction.reply('ph');
     },

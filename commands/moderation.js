@@ -1,4 +1,5 @@
 /**
+ * @todo - make sure this all uses try/catch not then/catch
  * @todo test kick and ban on higher permissioned user
  * @todo test masskick 
  */

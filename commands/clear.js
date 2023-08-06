@@ -142,7 +142,7 @@ module.exports = {
 
 /**
  * @todo - extend this with pagination?
- * 
+ * @todo - make the pinned deletion an option
  * Applies an action to filtered message objects in a channel.
  * @param {Interaction} interaction - The interaction object from discord.js
  * @param {Function} messageFilter - A function used to filter messages
@@ -157,7 +157,7 @@ async function actionFilteredMessages(interaction, messageFilter, messageAction,
         const messages = await interaction.channel.messages.fetch({ limit: 100 });
         for (const message of messages.values()) {
             if (count >= amount) break;
-            if (message.id !== reply.id && messageFilter(message)) {
+            if (message.id !== reply.id && messageFilter(message) && !message.pinned) { 
                 try {
                     await messageAction(message); // Apply the action to the filtered message
                     count++;
