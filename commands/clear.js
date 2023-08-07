@@ -6,7 +6,7 @@
  * @todo - don't try to alter non-moderatable members
 */
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
-const SubOptionBuilder = require('../builders/sub-option-builder');
+const SubOptionBuilder = require('../utilities/sub-option-builder');
 
 //server tidy-up commands
 let timeouts = new SubOptionBuilder('timeouts').getSubCmd();

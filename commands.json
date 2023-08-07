@@ -68,12 +68,50 @@
         ]
     },
     {
+        "name": "text",
+        "description": "Commands which manipulate and return text",
+        "subcommands":[
+            {
+                "name": "emojify",
+                "description":"Adds emojis to your message"
+            },
+            {
+                "name": "cuteify",
+                "description":"Translates your message into anime"
+            },
+            {
+                "name": "jarjar",
+                "description":"Meesa translate the message into Gungan, bombad"
+            },
+            {
+                "name": "zoomify",
+                "description":"Makes ur msg bussin fr, no cap"
+            },
+            {
+                "name": "random",
+                "description":"Selects a random word from the message"
+            },
+            {
+                "name": "clap",
+                "description":"Adds sassy claps to the message"
+            },
+            {
+                "name": "style",
+                "description":"Changes how the message looks"
+            },
+            {
+                "name": "translate",
+                "description": "Attempt to translate a message into another language"
+            }
+        ]
+    },
+    {
         "name": "clear",
         "description": "Commands to tidy up the server and users",
         "subcommands": [
             {
                 "name": "timeouts",
-                "description": "Cancels of the current timeouts"
+                "description": "Cancels all of the active timeouts"
             },
             {
                 "name": "nicknames",

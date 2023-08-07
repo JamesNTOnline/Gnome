@@ -6,7 +6,7 @@
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
-const SubOptionBuilder = require('../builders/sub-option-builder.js');
+const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 
 let displayEmoji = new SubOptionBuilder('display')
     .getSubCmd();

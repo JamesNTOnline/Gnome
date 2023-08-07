@@ -5,7 +5,7 @@
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
-const SubOptionBuilder = require('../builders/sub-option-builder.js');
+const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 
 /* commands are more or less "modular" and can have any types of options added. A finished cmd is retrieved using getSubCmd()
 ALL *REQUIRED* OPTIONS *MUST* COME BEFORE OPTIONALS */

@@ -102,6 +102,36 @@ class SubOptionBuilder {
         return this;
     }
 
+    addRequiredTextOption() {
+        this.#builder.addStringOption(option =>
+            option.setName('text')
+                .setDescription(`The text you want to do stuff with`)
+                .setMinLength(1)
+                .setMaxLength(1250)
+                .setRequired(true));
+        return this;
+    }
+
+    /**
+     * Adds choices to the sub-command builder
+     * The name and value will be the same string 
+     * @param {string[]} choices - The list of choices to add
+     */
+    addSimpleChoices(optionName, choices) {
+        if (!Array.isArray(choices)) {
+            throw new Error('Choices should be an array.');
+        }
+        const choicesList = choices.map(choice => ({ name: choice, value: choice }));
+
+        this.#builder.addStringOption(option =>
+            option.setName(optionName)
+                .setDescription('Select an option from the list')
+                .addChoices(...choicesList)
+            .setRequired(true)
+        );
+        return this;
+    }
+
 
     /**
      * Adds a choice of how many days worth of messages to purge when the command is called
