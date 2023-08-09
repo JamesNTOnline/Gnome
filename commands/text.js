@@ -70,6 +70,10 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
 };
 
+function replaceWordsInText(text){
+    
+}
+
 
 function applyStyleToText(text, styleName) {
     if (!styles[styleName]) {
