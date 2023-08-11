@@ -4,6 +4,7 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField 
 const SubOptionBuilder = require('../utilities/sub-option-builder');
 // Import the JSON data from data.json
 const styles = require('../utilities/text-styles.json'); //discord doesn't allow "true" fonts, but you can add the character mappings in this file
+const dictionary = require('../utilities/word-maps.json');
 
 //server tidy-up commands
 let emojify = new SubOptionBuilder('emojify').getSubCmd();
@@ -72,6 +73,26 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
 function replaceWordsInText(text){
     
+}
+
+function replaceWordEndings(text, endingKey){
+    const wordMapData = dictionary[wordMapKey];
+    const customReplacements = dictionary.endings[wordMapKey];
+  
+    if (!wordMapData || !customReplacements) {
+      console.log(`No word map found for key "${wordMapKey}"`);
+      return text;
+    }
+  
+    let modifiedText = text;
+  
+    for (const [endingToReplace, replacement] of Object.entries(customReplacements)) {
+      const regex = new RegExp(`${endingToReplace}\\b`, 'gi');
+      modifiedText = modifiedText.replace(regex, replacement);
+    }
+  
+    return modifiedText;
+  }
 }
 
 

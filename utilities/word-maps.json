@@ -98,7 +98,11 @@
         "goodbye": "selongabye",
         "to be": "besa",
         "time": "timen",
-        "test": "testen"
+        "test": "testen",
+        "endings":{
+            "ing": "en",
+            "ion": "eon"
+        }
     },
     "zoomer": {
     }
