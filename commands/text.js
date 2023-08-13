@@ -4,12 +4,14 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField 
 const SubOptionBuilder = require('../utilities/sub-option-builder');
 // Import the JSON data from data.json
 const styles = require('../utilities/text-styles.json'); //discord doesn't allow "true" fonts, but you can add the character mappings in this file
-const dictionary = require('../utilities/word-maps.json');
+const vocab = require('../utilities/words.json');
 
 //server tidy-up commands
 let emojify = new SubOptionBuilder('emojify').getSubCmd();
 let cuteify = new SubOptionBuilder('cuteify').getSubCmd();
-let jarjar = new SubOptionBuilder('jarjar').getSubCmd();
+let jarjar = new SubOptionBuilder('jarjar')
+    .addRequiredTextOption()
+    .getSubCmd();
 let zoomify = new SubOptionBuilder('zoomify').getSubCmd();
 let random = new SubOptionBuilder('random').getSubCmd();
 let clap = new SubOptionBuilder('clap').getSubCmd();
@@ -26,7 +28,8 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
     data: new SlashCommandBuilder()
         .setName('text')
         .setDescription('Transforms some provided text')
-        .addSubcommand(style),
+        .addSubcommand(style)
+        .addSubcommand(jarjar),
 
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand();
@@ -40,7 +43,17 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 await interaction.reply('ph');
                 break;
             case "jarjar":
-                await interaction.reply('ph');
+                try {
+                    await interaction.reply('Beautifying text...');
+                    const text = interaction.options.getString('text');
+                    let editedText = text.toLowerCase();
+                    editedText = replaceWordsInText(editedText, 'jarjar');
+                    editedText = replaceWordEndings(editedText, 'jarjar');
+                    await interaction.editReply(editedText);
+                } catch (error){
+                    console.error('Error occurred during style command:', error.message);
+                    await interaction.editReply('An error occurred while processing the style command.');
+                }
                 break;
             case "zoomify":
                 await interaction.reply('ph');
@@ -71,28 +84,39 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
 };
 
-function replaceWordsInText(text){
-    
+
+function replaceWordsInText(text, translationKey) {
+    // Create an array of phrases from the wordMap
+    const wordData = vocab[translationKey];
+    if (!wordData) {
+        console.log(`No vocabulary found for key "${translationKey}"`);
+        return text;
+    }
+    const phrases = Object.keys(wordData);
+    phrases.sort((a, b) => b.length - a.length);
+    // Replace phrases in the text
+    let translatedText = text;
+    phrases.forEach(phrase => {
+        const translation = wordData[phrase];
+        const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+        translatedText = translatedText.replace(regex, translation);
+    });
+    return translatedText;
 }
 
-function replaceWordEndings(text, endingKey){
-    const wordMapData = dictionary[wordMapKey];
-    const customReplacements = dictionary.endings[wordMapKey];
-  
-    if (!wordMapData || !customReplacements) {
-      console.log(`No word map found for key "${wordMapKey}"`);
-      return text;
+
+function replaceWordEndings(text, translationKey) {
+    const customReplacements = vocab.endings[translationKey];
+    if (!customReplacements) {
+        console.log(`No vocabulary found for key "${translationKey}"`);
+        return text;
     }
-  
     let modifiedText = text;
-  
     for (const [endingToReplace, replacement] of Object.entries(customReplacements)) {
-      const regex = new RegExp(`${endingToReplace}\\b`, 'gi');
-      modifiedText = modifiedText.replace(regex, replacement);
+        const regex = new RegExp(`${endingToReplace}\\b`, 'gi');
+        modifiedText = modifiedText.replace(regex, replacement);
     }
-  
     return modifiedText;
-  }
 }
 
 

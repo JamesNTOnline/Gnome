@@ -99,12 +99,28 @@
         "to be": "besa",
         "time": "timen",
         "test": "testen",
-        "endings":{
-            "ing": "en",
-            "ion": "eon"
-        }
+        "play": "playen",
+        "down": "neb",
+        "longer": "long",
+        "than": "den",
+        "like": "liken",
+        "better": "more good",
+        "end": "enden",
+        "guard": "guarden",
+        "be": "besa",
+        "release": "releasen",
+        "cover": "coveren",
+        "add": "adden",
+        "late": "laten"
     },
     "zoomer": {
+    },
+    "endings": {
+        "jarjar": {
+            "ing": "en",
+            "ion": "eon",
+            "er": "ah"
+        }
     }
 
 
