@@ -2,11 +2,14 @@
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const SubOptionBuilder = require('../utilities/sub-option-builder');
-// Import the JSON data from data.json
+const { buildReverseIndex } = require('../utilities/data-manager.js');
+//font and character libraries
 const styles = require('../utilities/text-styles.json'); //discord doesn't allow "true" fonts, but you can add the character mappings in this file
 const vocab = require('../utilities/words.json');
+const emojiData = require("emojilib");
+wordData = buildReverseIndex(emojiData);
 
-//server tidy-up commands
+//text translation commands
 let emojify = new SubOptionBuilder('emojify').getSubCmd();
 let cuteify = new SubOptionBuilder('cuteify').getSubCmd();
 let jarjar = new SubOptionBuilder('jarjar')
@@ -83,6 +86,9 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
 
 };
+
+
+
 
 
 function replaceWordsInText(text, translationKey) {

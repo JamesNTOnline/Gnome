@@ -52,18 +52,18 @@ module.exports = {
     /*Each subcommand requires a different resolution for their options
     interaction.options methods return different things about what happened in the command (i.e. target)*/
     async execute(interaction) {
-        const cmd_name = interaction.options.getSubcommand();
+        const cmdName = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
         const target = interaction.options.getUser('target') ?? filterTargets(interaction.options.getString('targets')); //the target(s) for the action member ?? string
-        const delete_days = interaction.options.getInteger('delete') ?? 0;
+        const deleteDays = interaction.options.getInteger('delete') ?? 0;
 
         if (!target) { //no target, don't do anything (should not happen anyway)
             interaction.reply('Target could not be found, did you enter it correctly?');
             return;
         }
 
-        if (checkPermissions(interaction, cmd_name, target)) {
-            switch (cmd_name) { // processing the options
+        if (checkPermissions(interaction, cmdName, target)) {
+            switch (cmdName) { // processing the options
                 /**
                  * Kicking a user removes them from the server without preventing them rejoining.
                  * The kick may fail still if the user leaves the server or the ID seems valid but isn't.
@@ -126,9 +126,9 @@ module.exports = {
                     if (await checkIfBanned(interaction, target)) { //dont remove await, it's required or the command hangs here
                         break;
                     }
-                    await attemptMessageTarget(interaction, target, cmd_name, reason)
+                    await attemptMessageTarget(interaction, target, cmdName, reason)
                     // User is not already banned - ban them and post in the server
-                    await interaction.guild.members.ban(target, { deleteMessageSeconds: delete_days, reason: reason })
+                    await interaction.guild.members.ban(target, { deleteMessageSeconds: deleteDays, reason: reason })
                         .then(() => {
                             interaction.reply(`**Banned** ${target}: ${reason}`);
                         })
@@ -153,7 +153,7 @@ module.exports = {
                     if (await checkIfBanned(interaction, target)) { //dont remove await, ignore the warning
                         break;
                     }
-                    await attemptMessageTarget(interaction, target, cmd_name, reason)
+                    await attemptMessageTarget(interaction, target, cmdName, reason)
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: 86400, reason: reason })
                         .then(() => {
                             interaction.reply(`**Purged:** <@${target.id}>`);
@@ -217,10 +217,10 @@ module.exports = {
  */
 function filterTargets(targetString) {
     const re = /(?:\d+\.)?\d+/g; //regex for all non-digit chars
-    let target_ids = targetString.match(re); //returns an array of matched identifiers
-    target_ids = target_ids.filter(id => id.length === 18); //a valid ID is 18 characters
-    console.log(target_ids);
-    return target_ids;
+    let targetIds = targetString.match(re); //returns an array of matched identifiers
+    targetIds = targetIds.filter(id => id.length === 18); //a valid ID is 18 characters
+    console.log(targetIds);
+    return targetIds;
 }
 
 
@@ -233,13 +233,13 @@ function filterTargets(targetString) {
  * @returns {boolean} whether the command is allowed to be carried out
  */
 function checkPermissions(interaction, cmd_name, target) {
-    const user_perms = interaction.member.permissions;
+    const userPerms = interaction.member.permissions;
     const targetIds = Array.isArray(target) ? target : [target.id];
     const clientUserId = interaction.client.user.id;
     const memberUserId = interaction.member.id;
     //check the user perms
-    if ((cmd_name.includes('kick') && !user_perms.has(PermissionsBitField.Flags.KickMembers))
-        || (cmd_name.includes('ban') && !user_perms.has(PermissionsBitField.Flags.BanMembers))) {
+    if ((cmd_name.includes('kick') && !userPerms.has(PermissionsBitField.Flags.KickMembers))
+        || (cmd_name.includes('ban') && !userPerms.has(PermissionsBitField.Flags.BanMembers))) {
         interaction.reply({ content: 'You don\'t have permission for that!', ephemeral: true });
     }
     //check the client isn't moderating itself
