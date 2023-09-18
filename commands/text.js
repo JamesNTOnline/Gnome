@@ -6,8 +6,8 @@ const { buildReverseIndex } = require('../utilities/data-manager.js');
 //font and character libraries
 const styles = require('../utilities/text-styles.json'); //discord doesn't allow "true" fonts, but you can add the character mappings in this file
 const vocab = require('../utilities/words.json');
-const emojiData = require("emojilib");
-wordData = buildReverseIndex(emojiData);
+const emojiPhraseData = require("emojilib");
+phraseEmojiData = buildReverseIndex(emojiPhraseData);
 
 //text translation commands
 let emojify = new SubOptionBuilder('emojify').getSubCmd();
@@ -49,8 +49,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 try {
                     await interaction.reply('Beautifying text...');
                     const text = interaction.options.getString('text');
-                    let editedText = text.toLowerCase();
-                    editedText = replaceWordsInText(editedText, 'jarjar');
+                    let editedText = replaceWordsInText(text, 'jarjar');
                     editedText = replaceWordEndings(editedText, 'jarjar');
                     await interaction.editReply(editedText);
                 } catch (error){
@@ -88,26 +87,51 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 };
 
 
-
-
-
 function replaceWordsInText(text, translationKey) {
-    // Create an array of phrases from the wordMap
     const wordData = vocab[translationKey];
     if (!wordData) {
         console.log(`No vocabulary found for key "${translationKey}"`);
         return text;
     }
-    const phrases = Object.keys(wordData);
-    phrases.sort((a, b) => b.length - a.length);
-    // Replace phrases in the text
     let translatedText = text;
-    phrases.forEach(phrase => {
-        const translation = wordData[phrase];
-        const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
-        translatedText = translatedText.replace(regex, translation);
+
+    // Create a regular expression pattern for matching all phrases
+    // uses the | (OR) operator to match any specified phrase
+    const pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
+
+    // Replace matched phrases
+    translatedText = translatedText.replace(pattern, match => {
+        // Get the translation from the wordData, or return the original match if not found
+        const translation = wordData[match.toLowerCase()] || match;
+        // Apply the original capitalization to the translation
+        return applyCasing(match, translation);
     });
+
     return translatedText;
+}
+
+
+function applyCasing(original, replacement) {
+    // optimisaiton - look if the original word is all caps or all lower case first
+    const isUpper = original === original.toUpperCase();
+    const isLower = original === original.toLowerCase();
+
+    if (isUpper) {
+        return replacement.toUpperCase();
+    } else if (isLower) {
+        return replacement.toLowerCase();
+    } else { //have to build the word with capitalisations
+        let result = '';
+        for (let i = 0; i < original.length; i++) {
+            const replaceChar = replacement[i] || '';
+            if (original[i] === original[i].toUpperCase()) {
+                result += replaceChar.toUpperCase();
+            } else {
+                result += replaceChar;
+            }
+        }
+        return result;
+    }
 }
 
 
