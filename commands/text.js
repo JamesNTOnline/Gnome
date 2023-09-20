@@ -10,12 +10,16 @@ const emojiPhraseData = require("emojilib");
 phraseEmojiData = buildReverseIndex(emojiPhraseData);
 
 //text translation commands
-let emojify = new SubOptionBuilder('emojify').getSubCmd();
+let emojify = new SubOptionBuilder('emojify')
+    .addRequiredTextOption()
+    .getSubCmd();
 let cuteify = new SubOptionBuilder('cuteify').getSubCmd();
 let jarjar = new SubOptionBuilder('jarjar')
     .addRequiredTextOption()
     .getSubCmd();
-let zoomify = new SubOptionBuilder('zoomify').getSubCmd();
+let zoomer = new SubOptionBuilder('zoomer') //make a subclass for text-only-commands?
+    .addRequiredTextOption()
+    .getSubCmd();
 let random = new SubOptionBuilder('random').getSubCmd();
 let clap = new SubOptionBuilder('clap').getSubCmd();
 let style = new SubOptionBuilder('style')
@@ -32,12 +36,18 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         .setName('text')
         .setDescription('Transforms some provided text')
         .addSubcommand(style)
-        .addSubcommand(jarjar),
+        .addSubcommand(jarjar)
+        .addSubcommand(zoomer),
 
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand();
-        const text = interaction.options.getString('text');
+        const text = interaction.options.getString('text') ?? "";
+        const style = interaction.options.getString('style') ?? "";
         let editedText = "";
+        let pattern;
+        
+        try{
+        await interaction.reply('Beautifying text...');
         switch (cmd_name) { // processing the options
             case "emojify":
                 await interaction.reply('ph');
@@ -46,19 +56,23 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 await interaction.reply('ph');
                 break;
             case "jarjar":
-                try {
-                    await interaction.reply('Beautifying text...');
-                    const text = interaction.options.getString('text');
-                    let editedText = replaceWordsInText(text, 'jarjar');
-                    editedText = replaceWordEndings(editedText, 'jarjar');
+                // try {
+                    // await interaction.reply('Beautifying text...');
+                    // const text = interaction.options.getString('text');
+                    //pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
+                    editedText = replaceWordsInText(text, cmd_name);
+                    editedText = replaceWordEndings(editedText, cmd_name);
                     await interaction.editReply(editedText);
-                } catch (error){
-                    console.error('Error occurred during style command:', error.message);
-                    await interaction.editReply('An error occurred while processing the style command.');
-                }
+                // } catch (error){
+                //     console.error('Error occurred during style command:', error.message);
+                //     await interaction.editReply('An error occurred while processing the style command.');
+                // }
                 break;
-            case "zoomify":
-                await interaction.reply('ph');
+            case "zoomer":
+                //pattern = new RegExp(Object.keys(wordData).join('|'), 'gi');
+                editedText = replaceWordsInText(text, cmd_name, true);
+                editedText = replaceWordEndings(editedText, cmd_name);
+                await interaction.editReply(editedText); //move this?
                 break;
             case "random":
                 await interaction.reply('ph');
@@ -67,28 +81,37 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 await interaction.reply('ph');
                 break;
             case "style":
-                try {
-                    await interaction.reply('Beautifying text...')
-                    const style = interaction.options.getString('style');
+                // try {
+                    //await interaction.reply('Beautifying text...')
+                    // const style = interaction.options.getString('style');
                     editedText = applyStyleToText(text, style);
                     await interaction.editReply(editedText);
-                } catch (error) {
-                    console.error('Error occurred during style command:', error.message);
-                    await interaction.editReply('An error occurred while processing the style command.');
-                }
+                // } catch (error) {
+                //     console.error('Error occurred during style command:', error.message);
+                //     await interaction.editReply('An error occurred while processing the style command.');
+                // }
                 break;
             case "translate":
                 await interaction.reply('ph');
                 break;
         }
-    },
+
+    } catch (error) {
+    console.error('Error occurred during style command:', error.message);
+    await interaction.editReply('An error occurred while processing the style command.');
+}
+
+
+
+},
 
 
 };
 
 
-function replaceWordsInText(text, translationKey) {
+function replaceWordsInText(text, translationKey, allowPartials = false) {
     const wordData = vocab[translationKey];
+    let pattern;
     if (!wordData) {
         console.log(`No vocabulary found for key "${translationKey}"`);
         return text;
@@ -97,9 +120,12 @@ function replaceWordsInText(text, translationKey) {
 
     // Create a regular expression pattern for matching all phrases
     // uses the | (OR) operator to match any specified phrase
-    const pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
-
-    // Replace matched phrases
+    if(allowPartials){
+        pattern = new RegExp(Object.keys(wordData).join('|'), 'gi');
+    } else {
+        pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
+    }
+        // Replace matched phrases
     translatedText = translatedText.replace(pattern, match => {
         // Get the translation from the wordData, or return the original match if not found
         const translation = wordData[match.toLowerCase()] || match;
