@@ -139,18 +139,19 @@ function replaceWordsInText(text, translationKey, allowPartials = false) {
 
 function applyCasing(original, replacement) {
     // optimisaiton - look if the original word is all caps or all lower case first
+    original = original.replace(/[^a-zA-Z]/g, ''); //get rid of non-letters because they cause problems
     const isUpper = original === original.toUpperCase();
     const isLower = original === original.toLowerCase();
 
-    if (isUpper) {
+    if (original.length > 1 && isUpper) { //exclude single letter replacements so the output isn't all caps.
         return replacement.toUpperCase();
     } else if (isLower) {
         return replacement.toLowerCase();
     } else { //have to build the word with capitalisations
         let result = '';
-        for (let i = 0; i < original.length; i++) {
-            const replaceChar = replacement[i] || '';
-            if (original[i] === original[i].toUpperCase()) {
+        for (let i = 0; i < replacement.length; i++) { // go over the output characters
+            const replaceChar = replacement[i];
+            if (i < original.length && original[i] === original[i].toUpperCase()) {
                 result += replaceChar.toUpperCase();
             } else {
                 result += replaceChar;
