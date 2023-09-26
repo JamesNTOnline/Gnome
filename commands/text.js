@@ -1,15 +1,17 @@
 
-
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
-const SubOptionBuilder = require('../utilities/sub-option-builder');
+const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const { buildReverseIndex } = require('../utilities/data-manager.js');
-//font and character libraries
-const styles = require('../utilities/text-styles.json'); //discord doesn't allow "true" fonts, but you can add the character mappings in this file
-const vocab = require('../utilities/words.json');
-const emojiPhraseData = require("emojilib");
-phraseEmojiData = buildReverseIndex(emojiPhraseData);
+
+//"fonts", characters, and translations
+const googleTranslate = require('@iamtraction/google-translate');
+const styles = require('../utilities/text-styles.json'); //alternate character appearance data
+const vocabulary = require('../utilities/words.json'); //slang translation data
+const emojiPhrases = require("emojilib"); 
+phraseEmojis = buildReverseIndex(emojiPhrases); 
 
 //text translation commands
+
 let emojify = new SubOptionBuilder('emojify')
     .addRequiredTextOption()
     .getSubCmd();
@@ -29,7 +31,6 @@ let style = new SubOptionBuilder('style')
 let translate = new SubOptionBuilder('translate').getSubCmd();
 
 
-//https://discordjs.guide/slash-commands/response-methods.html#ephemeral-responses
 
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: new SlashCommandBuilder()
@@ -57,12 +58,12 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 break;
             case "jarjar":
                 // try {
-                    // await interaction.reply('Beautifying text...');
-                    // const text = interaction.options.getString('text');
-                    //pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
-                    editedText = replaceWordsInText(text, cmd_name);
-                    editedText = replaceWordEndings(editedText, cmd_name);
-                    await interaction.editReply(editedText);
+                // await interaction.reply('Beautifying text...');
+                // const text = interaction.options.getString('text');
+                //pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
+                editedText = replaceWordsInText(text, cmd_name);
+                editedText = replaceWordEndings(editedText, cmd_name);
+                await interaction.editReply(editedText);
                 // } catch (error){
                 //     console.error('Error occurred during style command:', error.message);
                 //     await interaction.editReply('An error occurred while processing the style command.');
@@ -110,7 +111,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
 
 function replaceWordsInText(text, translationKey, allowPartials = false) {
-    const wordData = vocab[translationKey];
+    const wordData = vocabulary[translationKey];
     let pattern;
     if (!wordData) {
         console.log(`No vocabulary found for key "${translationKey}"`);
@@ -163,7 +164,7 @@ function applyCasing(original, replacement) {
 
 
 function replaceWordEndings(text, translationKey) {
-    const customReplacements = vocab.endings[translationKey];
+    const customReplacements = vocabulary.endings[translationKey];
     if (!customReplacements) {
         console.log(`No vocabulary found for key "${translationKey}"`);
         return text;

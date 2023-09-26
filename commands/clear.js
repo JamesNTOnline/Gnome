@@ -1,14 +1,15 @@
 /**
- * @todo - 
- * @todo - 
- * @todo - a more robust permission check
- * @todo - need to make sure pinned messages don't get changed
- * @todo - don't try to alter non-moderatable members
-*/
+ * These commands are intended to execute on groups of messages or groups of users
+ * In general they are "clean up" commands which perform administration tasks in bulk
+ * For example: /clear timeouts will reverse all of the currently active mutes on server members,
+ * which saves a lot of individual clicks
+ *
+ */
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
-const SubOptionBuilder = require('../utilities/sub-option-builder');
+const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 
-//server tidy-up commands
+
+// these commands modify groups of users
 let timeouts = new SubOptionBuilder('timeouts').getSubCmd();
 let nicknames = new SubOptionBuilder('nicknames').getSubCmd();
 let bans = new SubOptionBuilder('bans').getSubCmd();
@@ -17,7 +18,8 @@ let role = new SubOptionBuilder('role').getSubCmd()
         option.setName('role')
             .setDescription('The role to remove from all members')
             .setRequired(true));
-//message clearing commands
+
+// these commands modify messages
 let reactions = new SubOptionBuilder('reactions').getSubCmd();
 let bot = new SubOptionBuilder('bot').getSubCmd();
 let purge = new SubOptionBuilder('user')
@@ -36,14 +38,14 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('clear')
         .setDescription('Commands which can tidy up a server quickly')
-        .addSubcommand(timeouts)
-        .addSubcommand(nicknames)
-        .addSubcommand(bans)
-        .addSubcommand(role)
-        .addSubcommand(reactions)
-        .addSubcommand(bot)
-        .addSubcommand(purge)
-        .addSubcommand(all),
+        .addSubcommand(timeouts) // undo all of the active timeouts
+        .addSubcommand(nicknames) // undo all of the active nicknames
+        .addSubcommand(bans) // undo all of the active bans
+        .addSubcommand(role) // remove a specified role from every member who has it currently
+        .addSubcommand(reactions) // remove all reactions from recent posts
+        .addSubcommand(bot) // remove messages left by the bot itself
+        .addSubcommand(purge) // remove recent messages sent by a particular user
+        .addSubcommand(all), // remove recent messages from all users
 
     async execute(interaction) {
         const cmdName = interaction.options.getSubcommand();
@@ -116,11 +118,11 @@ module.exports = {
                     });
                     break;
                 case 'reactions':
-                    filterCondition = (msg) => msg.reactions.cache.size > 0; //this code is kinda duplicate
+                    filterCondition = (msg) => msg.reactions.cache.size > 0; 
                     actionFilteredMessages(interaction, filterCondition, async (msg) => msg.reactions.removeAll());
                     break;
                 case 'bot':
-                    filterCondition = (msg) => msg.author.id === botUserId; //this code is kinda duplicate
+                    filterCondition = (msg) => msg.author.id === botUserId; 
                     actionFilteredMessages(interaction, filterCondition, async (msg) => msg.delete());
                     break;
                 case 'user': //we need to reply first. causing problems.

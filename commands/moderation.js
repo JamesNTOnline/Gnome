@@ -126,7 +126,7 @@ module.exports = {
                     if (await checkIfBanned(interaction, target)) { //dont remove await, it's required or the command hangs here
                         break;
                     }
-                    await attemptMessageTarget(interaction, target, cmdName, reason)
+                    await tryDirectMessage(interaction, target, cmdName, reason)
                     // User is not already banned - ban them and post in the server
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: deleteDays, reason: reason })
                         .then(() => {
@@ -153,7 +153,7 @@ module.exports = {
                     if (await checkIfBanned(interaction, target)) { //dont remove await, ignore the warning
                         break;
                     }
-                    await attemptMessageTarget(interaction, target, cmdName, reason)
+                    await tryDirectMessage(interaction, target, cmdName, reason)
                     await interaction.guild.members.ban(target, { deleteMessageSeconds: 86400, reason: reason })
                         .then(() => {
                             interaction.reply(`**Purged:** <@${target.id}>`);
@@ -242,11 +242,9 @@ function checkPermissions(interaction, cmd_name, target) {
         || (cmd_name.includes('ban') && !userPerms.has(PermissionsBitField.Flags.BanMembers))) {
         interaction.reply({ content: 'You don\'t have permission for that!', ephemeral: true });
     }
-    //check the client isn't moderating itself
-    else if (targetIds.includes(clientUserId)) {
+    else if (targetIds.includes(clientUserId)){ //check the client isn't moderating itself
         interaction.reply({ content: "I can't Gnome myself!", ephemeral: true });
-    //check the user isn't moderating itself
-    } else if (targetIds.includes(memberUserId)) {
+    } else if (targetIds.includes(memberUserId)){ //check the user isn't moderating itself
         interaction.reply({ content: "I can't help you Gnome yourself!", ephemeral: true });
     } else {
         return true; // Only return true if permission checks pass
@@ -278,13 +276,13 @@ async function checkIfBanned(interaction, target) {
  * @param {string} cmd_name - The name of the command
  * @param {string} reason - The reason for the action (optional)
  */
-async function attemptMessageTarget(interaction, target, cmd_name, reason) {
+async function tryDirectMessage(interaction, target, cmd_name, reason) {
     console.log("reached");
     if (interaction.guild.members.cache.has(target.id)) {
         await target.send(generateOutputString(cmd_name, interaction, reason))
             .catch(() => {
                 console.log(`${target.id} has DMs closed or blocked the bot`);
-                // Sending a DM may fail due to a user's privacy settings - ignore errors
+                // Sending a DM may fail due to a user's privacy settings - don't see a way to avoid the error
             });
     }
 }
@@ -310,11 +308,6 @@ function handleError(interaction, err) {
  * @returns {string} A summary of what the command did and why
  */
 function generateOutputString(cmd_name, interaction, reason) {
-    let actionMessage = '';
-    if (cmd_name.includes('kick')) {
-        actionMessage = 'kicked';
-    } else if (cmd_name.includes('ban')) {
-        actionMessage = cmd_name + 'ned';
-    }
+    let actionMessage = cmd_name.includes('kick') ? 'kicked' : cmd_name.includes('ban') ? cmd_name + 'ned' : '';
     return `You were ${actionMessage} from ${interaction.guild.name}:\n${reason}`;
 }
