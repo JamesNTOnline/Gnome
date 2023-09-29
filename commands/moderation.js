@@ -53,8 +53,8 @@ module.exports = {
         const cmdName = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason') ?? 'No reason provided.';
         const target = interaction.options.getUser('target') ?? filterTargets(interaction.options.getString('targets')); //the target(s) for the action member ?? string
-        const deleteDays = interaction.options.getInteger('delete') ?? 0;
-
+        const deletePeriod = interaction.options.getInteger('delete') ?? 0;
+        let success = false;
         if (!target) { //no target, don't do anything (should not happen anyway)
             interaction.reply('Target could not be found, did you enter it correctly?');
             return;
@@ -120,18 +120,19 @@ module.exports = {
                  * @todo
                  */
                 case 'ban':
-                    try {
-                        // Check if target is already banned and skip the rest of the case if true
-                        if (await checkIfBanned(interaction, target)) {
-                            break;
-                        }
-                        await tryDirectMessage(interaction, target, cmdName, reason);
-                        // User is not already banned - ban them and post in the server
-                        await interaction.guild.members.ban(target, {deleteMessageDays: deleteDays, reason: reason});
-                        interaction.reply(`**Banned** ${target}: ${reason}`);
-                    } catch (err) {
-                        handleError(interaction, err);
-                    }
+                    success = tryBanUser(interaction, target, cmdName, reason, deletePeriod);
+                    // try {
+                    //     // Check if target is already banned and skip the rest of the case if true
+                    //     if (await checkIfBanned(interaction, target)) {
+                    //         break;
+                    //     }
+                    //     await tryDirectMessage(interaction, target, cmdName, reason);
+                    //     // User is not already banned - ban them and post in the server
+                    //     await interaction.guild.members.ban(target, {deleteMessageDays: deleteDays, reason: reason});
+                    //     interaction.reply(`**Banned** ${target}: ${reason}`);
+                    // } catch (err) {
+                    //     handleError(interaction, err);
+                    // }
                     break;
                 /**
                  * Tempban serves as a medium between a ban and a kick - a ban which will reverse itself after time
@@ -147,17 +148,26 @@ module.exports = {
                  * @todo: could make the delete_time variable. for now it is max
                  */
                 case 'softban':
-                    try {
-                        if (await checkIfBanned(interaction, target)) {
-                            break;
+                    success = tryBanUser(interaction, target, cmdName, reason, 86400);
+                    try{
+                        if(success){
+                            await interaction.guild.members.unban(target);
                         }
-                        await tryDirectMessage(interaction, target, cmdName, reason);
-                        await interaction.guild.members.ban(target, {deleteMessageSeconds: 86400, reason: reason});
-                        interaction.reply(`**Purged:** <@${target.id}>`);
-                        await interaction.guild.members.unban(target);
                     } catch (err) {
-                        handleError(interaction, err);
+                        interaction.followUp({ content: `Something went wrong; user may still be (check audit log)`, ephemeral: true});
+                        console.error(err);                        
                     }
+                    // try {
+                    //     if (await checkIfBanned(interaction, target)) {
+                    //         break;
+                    //     }
+                    //     await tryDirectMessage(interaction, target, cmdName, reason);
+                    //     await interaction.guild.members.ban(target, {deleteMessageSeconds: 86400, reason: reason});
+                    //     interaction.reply(`**Purged:** <@${target.id}>`);
+                    //     await interaction.guild.members.unban(target);
+                    // } catch (err) {
+                    //     handleError(interaction, err);
+                    // }
                     break;
                   
                 /**
@@ -221,6 +231,7 @@ function filterTargets(targetString) {
 /**
  * Checks for permissions and that the commands aren't being called on either the client or the caller
  * @todo this could be more even more specific; rn if a masskick is performed and one name is the mod, it will fail.
+ * @todo match the command to the permission somehow
  * @param {Interaction} interaction - the interaction event from discord.js
  * @param {string} cmd_name - the name of the command
  * @param {User | Array} target - a User object or an array of IDs
@@ -244,6 +255,23 @@ function checkPermissions(interaction, cmd_name, target) {
         return true; // Only return true if permission checks pass
     }
     return false; // Return false if any of the permission checks fail
+}
+
+
+
+async function tryBanUser(interaction, target, cmdName, reason, deletePeriod) {
+    try {
+        if (await checkIfBanned(interaction, target)) {
+            return false; // user can't be banned
+        }
+        await tryDirectMessage(interaction, target, cmdName, reason);
+        await interaction.guild.members.ban(target, { deleteMessageSeconds: deletePeriod, reason: reason });
+        interaction.reply(`**${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)}ned** ${target}: ${reason}`);
+        return true; // successful ban
+    } catch (err) {
+        handleError(interaction, err);
+        return false; 
+    }
 }
 
 
@@ -273,15 +301,16 @@ async function checkIfBanned(interaction, target) {
  * @param {string} reason - The reason for the action (optional)
  */
 async function tryDirectMessage(interaction, target, cmd_name, reason) {
-    console.log("reached");
-    if (interaction.guild.members.cache.has(target.id)) {
-        await target.send(generateOutputString(cmd_name, interaction, reason))
-            .catch(() => {
-                console.log(`${target.id} has DMs closed or blocked the bot`);
-                // Sending a DM may fail due to a user's privacy settings - don't see a way to avoid the error
-            });
+    try {
+        if (interaction.guild.members.cache.has(target.id)) {
+            await target.send(buildMessage(cmd_name, interaction, reason));
+        }
+    } catch (error) {
+        console.log(`${target.id} is blocking direct messages`);
+        // Handle the error as needed, such as logging it or taking other actions
     }
 }
+  
 
 
 /** DUPLICATE EXTRACT TO A MODULE
@@ -303,7 +332,7 @@ function handleError(interaction, err) {
  * @param {string} reason - The reaction the command was used
  * @returns {string} A summary of what the command did and why
  */
-function generateOutputString(cmd_name, interaction, reason) {
+function buildMessage(cmd_name, interaction, reason) {
     let actionMessage = cmd_name.includes('kick') ? 'kicked' : cmd_name.includes('ban') ? cmd_name + 'ned' : '';
     return `You were ${actionMessage} from ${interaction.guild.name}:\n${reason}`;
 }

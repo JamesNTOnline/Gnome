@@ -9,7 +9,7 @@
                 "options": [
                     {
                         "name": "user",
-                        "description": "This could be an example of how to do dynamic command generation",
+                        "description": "This could be an example of how to do command generation",
                         "how": "use the json present to determine which option functions to call on an object",
                         "maxlength": 100,
                         "required": true
