@@ -56,6 +56,7 @@ module.exports = {
         const deletePeriod = interaction.options.getInteger('delete') ?? 0;
         let success = false;
         if (!target) { //no target, don't do anything (should not happen anyway)
+            console.log('mod command attempted without target');
             interaction.reply('Target could not be found, did you enter it correctly?');
             return;
         }
@@ -63,12 +64,11 @@ module.exports = {
         if (checkPermissions(interaction, cmdName, target)) {
             switch (cmdName) { // processing the options
                 /**
-                 * Kicking a user removes them from the server without preventing them rejoining.
-                 * The kick may fail still if the user leaves the server or the ID seems valid but isn't.
-                 * @todo
+                 * Kicking can fail if a user leaves the server before the command is sent so check the ID is valid up front
                  */
                 case 'kick':
                     if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch
+                        console.log(`kick attempted on invalid ID: ${target.id}`);
                         interaction.reply('Invalid ID - user may not be in this server');
                         break;
                     }
@@ -233,23 +233,26 @@ function filterTargets(targetString) {
  * @todo this could be more even more specific; rn if a masskick is performed and one name is the mod, it will fail.
  * @todo match the command to the permission somehow
  * @param {Interaction} interaction - the interaction event from discord.js
- * @param {string} cmd_name - the name of the command
+ * @param {string} cmdName - the name of the command
  * @param {User | Array} target - a User object or an array of IDs
  * @returns {boolean} whether the command is allowed to be carried out
  */
-function checkPermissions(interaction, cmd_name, target) {
+function checkPermissions(interaction, cmdName, target) {
     const userPerms = interaction.member.permissions;
     const targetIds = Array.isArray(target) ? target : [target.id];
     const clientUserId = interaction.client.user.id;
     const memberUserId = interaction.member.id;
     //check the user perms
-    if ((cmd_name.includes('kick') && !userPerms.has(PermissionsBitField.Flags.KickMembers))
-        || (cmd_name.includes('ban') && !userPerms.has(PermissionsBitField.Flags.BanMembers))) {
+    if ((cmdName.includes('kick') && !userPerms.has(PermissionsBitField.Flags.KickMembers))
+        || (cmdName.includes('ban') && !userPerms.has(PermissionsBitField.Flags.BanMembers))) {
+        console.log(`${cmdName} attempt without permission: ${userPerms}`);
         interaction.reply({ content: 'You don\'t have permission for that!', ephemeral: true });
     }
     else if (targetIds.includes(clientUserId)){ //check the client isn't moderating itself
+        console.log('bot tried to moderate itself');
         interaction.reply({ content: "I can't Gnome myself!", ephemeral: true });
     } else if (targetIds.includes(memberUserId)){ //check the user isn't moderating itself
+        console.log('user tried to moderate themselves');
         interaction.reply({ content: "I can't help you Gnome yourself!", ephemeral: true });
     } else {
         return true; // Only return true if permission checks pass
@@ -262,11 +265,17 @@ function checkPermissions(interaction, cmd_name, target) {
 async function tryBanUser(interaction, target, cmdName, reason, deletePeriod) {
     try {
         if (await checkIfBanned(interaction, target)) {
+            console.log('ban was called on a banned user');
             return false; // user can't be banned
         }
-        await tryDirectMessage(interaction, target, cmdName, reason);
+        // Attempt to send a direct message to the target
+        try {
+            await sendDirectMessage(interaction, target, cmdName, reason);
+        } catch (dmError) {
+            console.log(`DM could not be sent. Error: ${dmError.message}`);
+        }
         await interaction.guild.members.ban(target, { deleteMessageSeconds: deletePeriod, reason: reason });
-        interaction.reply(`**${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)}ned** ${target}: ${reason}`);
+        await interaction.reply(`**${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)}ned** ${target}: ${reason}`);
         return true; // successful ban
     } catch (err) {
         handleError(interaction, err);
@@ -284,7 +293,7 @@ async function tryBanUser(interaction, target, cmdName, reason, deletePeriod) {
 async function checkIfBanned(interaction, target) {
     const bannedUsers = await interaction.guild.bans.fetch();
     if (bannedUsers.get(target.id)) {
-        interaction.reply({ content: `${target} is already banned.`, ephemeral: true });
+        await interaction.reply({ content: `${target} is already banned.`, ephemeral: true });
         return true; // Target is already banned
     }
     return false; // Target is not banned
@@ -300,15 +309,10 @@ async function checkIfBanned(interaction, target) {
  * @param {string} cmd_name - The name of the command
  * @param {string} reason - The reason for the action (optional)
  */
-async function tryDirectMessage(interaction, target, cmd_name, reason) {
-    try {
-        if (interaction.guild.members.cache.has(target.id)) {
+async function sendDirectMessage(interaction, target, cmd_name, reason) {
+        if (interaction.guild.members.cache.has(target.id)) { // this shouldn't be cache.
             await target.send(buildMessage(cmd_name, interaction, reason));
         }
-    } catch (error) {
-        console.log(`${target.id} is blocking direct messages`);
-        // Handle the error as needed, such as logging it or taking other actions
-    }
 }
   
 
