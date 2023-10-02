@@ -35,6 +35,8 @@ exporting a slashcommandbuilder object.
 this object needs to have a name and description (required by command.toJSON)
 */
 module.exports = {
+    checkIfBanned,
+    tryBanUser,
     data: new SlashCommandBuilder()
         .setName('mod')
         .setDescription('Commands to remove unruly users')

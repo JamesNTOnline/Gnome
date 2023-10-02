@@ -2,163 +2,49 @@
 const { Client, GatewayIntentBits, PermissionsBitField, Collection } = require('discord.js');
 const { token } = require('../botconfig.json');
 const moderation = require('../commands/moderation.js');
-
-const targetMock = {
-    id: 'target id',
-    displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/tar_avatar.jpg'),
-};
-
-const guildMock = {
-    members: {
-        kick: jest.fn().mockResolvedValue(), // Add the kick method mock
-        ban: jest.fn().mockResolvedValue(),
-        cache: {
-            get: jest.fn().mockReturnValue(true),
-            has: jest.fn().mockReturnValue(true),
-        }
-    },
-    bans: {
-        fetch: jest.fn().mockResolvedValue(new Collection())
-    }
-};
-
-const adminMock = {
-    id: 'admin id',
-    displayAvatarURL: jest.fn().mockReturnValue('https://cdn.discordapp.com/admin_avatar.jpg'),
-    permissions: {
-        has: jest.fn().mockReturnValue(true),
-    }
-};
+const { memberMock, guildMock, adminMock } = require('./mocks.js');
 
 
-describe('/mod commands', () => {
-    let clientMock;
-    beforeAll(async () => { //sets up once before all tests
-        clientMock = new Client({
-            intents: [
-                GatewayIntentBits.Guilds,
-                GatewayIntentBits.GuildMessages,
-                GatewayIntentBits.MessageContent,
-                GatewayIntentBits.GuildMembers,
-            ],
-            user: {
-                id: 'client id',
-            },
+function setupCommonClient() {
+    const clientMock = new Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildMembers,
+        ],
+        user: {
+            id: 'client id',
+        },
+    });
+
+    return clientMock;
+}
+
+let clientMock; // Represents the bot
+
+beforeAll(async () => {
+    // Call the common setup function for the client
+    clientMock = setupCommonClient();
+
+    // Log in the client and wait for it to be ready
+    await clientMock.login(token);
+    await new Promise((resolve) => {
+        clientMock.once('ready', () => {
+            resolve();
         });
-
-        const clientReady = new Promise((resolve) => {
-            clientMock.once('ready', () => {
-                resolve();
-            });
-        });
-
-        await clientMock.login(token);
-        await clientReady;
     });
-
-    afterAll(async () => {
-        await clientMock.destroy();
-    });
-
-
-    test('testing: a successful /mod kick command', async () => {
-        //const kickMock = jest.fn().mockResolvedValue();
-        //guildMock.members.kick = kickMock;
-        const interactionMock = setupMockInteraction(clientMock, 'kick', 'Reason for kick', 0);
-
-        await moderation.execute(interactionMock);
-
-        assertSuccessfulCommandExecution(
-            interactionMock,
-            guildMock.members.kick,
-            [targetMock, 'Reason for kick' ],
-            '**Kicked** target id: Reason for ban'
-        );
-    });
-
-    test('testing: a successful /mod ban command', async () => {
-        //const banMock = jest.fn().mockResolvedValue();
-        //guildMock.members.ban = banMock;
-        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 86400);
-   
-        // Assert that the fetch method of guildMock.bans is called
-        await moderation.execute(interactionMock);
-        assertSuccessfulCommandExecution(
-            interactionMock,
-            guildMock.members.ban,
-            [targetMock, { deleteMessageSeconds: 86400, reason: 'Reason for ban' }],
-            '**Banned** target id: Reason for ban'
-        );
-    });
-
-    test('testing: sending a PM to a user', async () => {}); //to do
-
-    test('testing: unbanning a banned user', async () => {}); 
-
-    test('testing: banning a banned user', async () => {
-        // mock object for the banned member
-        // const bannedMember = { id: '123456789', user: { username: 'BannedUser' } };
-        // return a mock collection containing the banned member
-        // interactionMock.guild.bans.fetch = jest.fn().mockResolvedValue(new Collection([[bannedMember.id, bannedMember]]));
-        // expect(interactionMock.guild.bans.fetch().get(bannedMember.id)).toEqual(bannedMember);
-    });
-
-
-    test('testing: unbanning a not-banned user', async () => {}); //
-
-    test('testing: sending a PM to a user', async () => {}); //
-
-    test('testing: failed /mod ban due to client targetting itself', async () => {
-        //const banMock = jest.fn().mockResolvedValue();
-        //guildMock.members.ban = banMock;
-        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
-        // Set the target ID to be the same as the client's user ID
-        interactionMock.options.getUser.mockReturnValue({
-            id: clientMock.user.id,
-            displayAvatarURL: jest.fn().mockReturnValue(clientMock.user.defaultAvatarURL),
-        });
-        await moderation.execute(interactionMock);
-
-        expect(interactionMock.reply).toHaveBeenCalledWith({content: 'I can\'t Gnome myself!', ephemeral: true});
-        expect(guildMock.members.ban).not.toHaveBeenCalled();
-    });
-
-    test('testing: failed /mod ban when user targets themselves', async () => {
-        //const banMock = jest.fn().mockResolvedValue();
-        //guildMock.members.ban = banMock;
-        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
-        // Set the target ID to be the same as the command caller's ID
-        interactionMock.options.getUser.mockReturnValue(adminMock);
-        await moderation.execute(interactionMock);
-
-        expect(interactionMock.reply).toHaveBeenCalledWith({content: 'I can\'t help you Gnome yourself!', ephemeral: true});
-        expect(guildMock.members.ban).not.toHaveBeenCalled();
-    });
-
-    test('testing: failed /mod kick due to insufficient permissions', async () => {
-        //const kickMock = jest.fn().mockResolvedValue();
-        //guildMock.members.kick = kickMock;
-        adminMock.permissions.has.mockImplementation((flag) => {
-            return flag === PermissionsBitField.Flags.KickMembers ? false : true;
-        });
-        const interactionMock = setupMockInteraction(clientMock, 'kick', 'Reason for kick', 0);
-        await moderation.execute(interactionMock);
-        assertInsufficientPermissions(interactionMock, guildMock.members.kick);
-    });
-
-    test('testing: failed /mod ban due to insufficient permissions', async () => {
-        //const banMock = jest.fn().mockResolvedValue();
-        //guildMock.members.ban = banMock;
-        adminMock.permissions.has.mockImplementation((flag) => {
-            return flag === PermissionsBitField.Flags.BanMembers ? false : true;
-        });
-        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
-        await moderation.execute(interactionMock);
-        assertInsufficientPermissions(interactionMock, guildMock.members.ban);
-    });
-
-
 });
+
+afterAll(async () => {
+    await clientMock.destroy();
+});
+
+beforeEach(() =>{
+    guildMock.members.ban.mockReset(); // Reset the mock function
+    guildMock.members.kick.mockReset()
+})
+
 
 
 /**
@@ -180,7 +66,7 @@ function setupMockInteraction(client, subcommand, reason, deleteValue) {
         client: client,
         options: {
             getSubcommand: jest.fn().mockReturnValue(subcommand),
-            getUser: jest.fn().mockReturnValue(targetMock),
+            getUser: jest.fn().mockReturnValue(memberMock),
             getString: jest.fn().mockReturnValue(reason),
             getInteger: jest.fn().mockReturnValue(deleteValue),
         },
@@ -192,16 +78,150 @@ function setupMockInteraction(client, subcommand, reason, deleteValue) {
 }
 
 
+// Describe block for /ban commands
+describe('Ban functionality', () => {
+
+    test('ADMIN bans SERVER MEMBER', async () => {
+        //console.log(clientMock);
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 86400);
+
+        // Assert that the fetch method of guildMock.bans is called
+        moderation.execute(interactionMock);
+        assertSuccessfulCommandExecution(
+            interactionMock,
+            guildMock.members.ban,
+            [memberMock, { deleteMessageSeconds: 86400, reason: 'Reason for ban' }],
+            '**Banned** target id: Reason for ban'
+        );
+    });
+
+
+    test('tryBanUser functionality', async () => {
+        const cmdName = 'ban';
+        const reason = 'Reason for ban';
+        const time = 86400;
+        // Mock the interaction object and other necessary parameters
+        const interactionMock = setupMockInteraction(clientMock, cmdName, reason, time);
+
+        // Create a spy for checkIfBanned and mock its behavior
+        const checkIfBannedSpy = jest.spyOn(moderation, 'checkIfBanned');
+        checkIfBannedSpy.mockResolvedValue(false); // Mock it to return false
+
+        // Mock the external dependencies and just return true for success
+        jest.spyOn(moderation, 'tryBanUser').mockResolvedValue(true);
+
+        // Call the function and await its result
+        const success = await moderation.tryBanUser(interactionMock, memberMock, cmdName, reason, time);
+
+        // Assert that checkIfBanned was called with the correct arguments
+        expect(checkIfBannedSpy).toHaveBeenCalledWith(interactionMock, memberMock);
+
+        // Assert that the result is true
+        expect(success).toBe(true);
+    });
+
+
+    test('ADMIN bans BANNED USER', async () => {
+        // mock object for the banned member
+        // const bannedMember = { id: '123456789', user: { username: 'BannedUser' } };
+        // return a mock collection containing the banned member
+        // interactionMock.guild.bans.fetch = jest.fn().mockResolvedValue(new Collection([[bannedMember.id, bannedMember]]));
+        // expect(interactionMock.guild.bans.fetch().get(bannedMember.id)).toEqual(bannedMember);
+    });
+
+
+    test('ADMIN unbans BANNED USER', async () => { });
+
+
+    test('ADMIN unbans NOT-BANNED USER', async () => { }); //
+
+
+    test('BOT bans SELF', async () => {
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
+        // set target ID to be the same as the client's user ID
+        interactionMock.options.getUser.mockReturnValue({
+            id: clientMock.user.id,
+            displayAvatarURL: jest.fn().mockReturnValue(clientMock.user.defaultAvatarURL),
+        });
+        await moderation.execute(interactionMock);
+
+        expect(interactionMock.reply).toHaveBeenCalledWith({ content: 'I can\'t Gnome myself!', ephemeral: true });
+        expect(guildMock.members.ban).not.toHaveBeenCalled();
+    });
+
+
+    test('USER bans SELF', async () => {
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
+        // Set the target ID to be the same as the command caller's ID
+        interactionMock.options.getUser.mockReturnValue(adminMock);
+        await moderation.execute(interactionMock);
+
+        expect(interactionMock.reply).toHaveBeenCalledWith({ content: 'I can\'t help you Gnome yourself!', ephemeral: true });
+        expect(guildMock.members.ban).not.toHaveBeenCalled();
+
+    });
+
+
+    test('USER bans WITHOUT PERMS', async () => {
+        adminMock.permissions.has.mockImplementation((flag) => {
+            return flag === PermissionsBitField.Flags.BanMembers ? false : true;
+        });
+        const interactionMock = setupMockInteraction(clientMock, 'ban', 'Reason for ban', 0);
+        await moderation.execute(interactionMock);
+        assertInsufficientPermissions(interactionMock, guildMock.members.ban);
+    });
+
+});
+
+
+describe('Kick functionality', () => {
+
+    test('ADMIN kicks SERVER MEMBER', async () => {
+        const interactionMock = setupMockInteraction(clientMock, 'kick', 'Reason for kick', 0);
+
+        await moderation.execute(interactionMock);
+
+        assertSuccessfulCommandExecution(
+            interactionMock,
+            guildMock.members.kick,
+            [memberMock, 'Reason for kick'],
+            '**Kicked** target id: Reason for ban'
+        );
+    });
+
+
+    test('ADMIN kicks OUTSIDE USER', async () => { });
+
+
+    test('BOT kicks SELF', async () => { });
+
+
+    test('USER kicks SELF', async () => { });
+
+
+    test('USER kicks WITHOUT PERMS', async () => {
+        adminMock.permissions.has.mockImplementation((flag) => {
+            return flag === PermissionsBitField.Flags.KickMembers ? false : true;
+        });
+        const interactionMock = setupMockInteraction(clientMock, 'kick', 'Reason for kick', 0);
+        await moderation.execute(interactionMock);
+        assertInsufficientPermissions(interactionMock, guildMock.members.kick);
+    });
+
+});
+
+
+
 // Helper function to assert the successful execution of a command
 function assertSuccessfulCommandExecution(interaction, methodToAssert, expectedOptions, expectedReply) {
-    console.log('arguments received:', methodToAssert.mock.calls);
-    console.log('expected arguments:', expectedOptions);
+    //console.log('arguments received:', methodToAssert.mock.calls);
+    //console.log('expected arguments:', expectedOptions);
     expect(methodToAssert).toHaveBeenCalledWith(...expectedOptions);
     expect(interaction.reply).toHaveBeenCalledWith(expectedReply);
 }
 
 // Helper function to assert the failure of a command due to insufficient permissions
 function assertInsufficientPermissions(interaction, methodToAssert) {
-    expect(interaction.reply).toHaveBeenCalledWith({ content: 'You don\'t have permission for that!', ephemeral: true});
+    expect(interaction.reply).toHaveBeenCalledWith({ content: 'You don\'t have permission for that!', ephemeral: true });
     expect(methodToAssert).not.toHaveBeenCalled();
 }
