@@ -81,7 +81,7 @@ module.exports = {
                             interaction.reply(`**Kicked:** <@${target.id}>`);
                         })
                         .catch(err => {
-                            handleError(interaction, err);
+                            handleError(interaction, target, err);
                         });
                     break;
                 /**
@@ -114,27 +114,16 @@ module.exports = {
                         }
                         await interaction.editReply(response);
                     } catch (err) {
-                        handleError(interaction, err);
+                        handleError(interaction, target, err);
                     }
                     break;
                 /**
                  * Ban blocks the user from rejoining (and deletes some of their last posts) until reversed
-                 * @todo
+                 * @todo implement tempban
+                 * @todo testing for softban
                  */
                 case 'ban':
                     success = tryBanUser(interaction, target, cmdName, reason, deletePeriod);
-                    // try {
-                    //     // Check if target is already banned and skip the rest of the case if true
-                    //     if (await checkIfBanned(interaction, target)) {
-                    //         break;
-                    //     }
-                    //     await tryDirectMessage(interaction, target, cmdName, reason);
-                    //     // User is not already banned - ban them and post in the server
-                    //     await interaction.guild.members.ban(target, {deleteMessageDays: deleteDays, reason: reason});
-                    //     interaction.reply(`**Banned** ${target}: ${reason}`);
-                    // } catch (err) {
-                    //     handleError(interaction, err);
-                    // }
                     break;
                 /**
                  * Tempban serves as a medium between a ban and a kick - a ban which will reverse itself after time
@@ -156,20 +145,9 @@ module.exports = {
                             await interaction.guild.members.unban(target);
                         }
                     } catch (err) {
-                        interaction.followUp({ content: `Something went wrong; user may still be (check audit log)`, ephemeral: true});
+                        interaction.followUp({ content: `Something went wrong; user may still be banned`, ephemeral: true});
                         console.error(err);                        
                     }
-                    // try {
-                    //     if (await checkIfBanned(interaction, target)) {
-                    //         break;
-                    //     }
-                    //     await tryDirectMessage(interaction, target, cmdName, reason);
-                    //     await interaction.guild.members.ban(target, {deleteMessageSeconds: 86400, reason: reason});
-                    //     interaction.reply(`**Purged:** <@${target.id}>`);
-                    //     await interaction.guild.members.unban(target);
-                    // } catch (err) {
-                    //     handleError(interaction, err);
-                    // }
                     break;
                   
                 /**
@@ -182,12 +160,7 @@ module.exports = {
                         await interaction.guild.members.unban(target);
                         interaction.reply(`Unbanned ${target}: ${reason}`);
                     } catch (err) {
-                        if (err.code === 10026) { // discord's api error for an unknown ban
-                            interaction.reply({ content: `${target} is not banned.`, ephemeral: true });
-                        } else {
-                            console.error('Error while unbanning:', err);
-                            handleError(interaction, err);
-                        }
+                            handleError(interaction, target, err);
                     }
                     break;
                       
@@ -202,12 +175,7 @@ module.exports = {
                         await interaction.guild.members.ban(target, { reason: reason });
                         interaction.reply(`Updated ${target} ban reason: ${reason}`);
                     } catch (err) {
-                        if (err.code === 10026) {
-                            interaction.reply({ content: `${target} is not banned.`, ephemeral: true });
-                        } else {
-                            console.error('Error while editing:', err);
-                            handleError(interaction, err);
-                        }
+                            handleError(interaction, target, err);
                     }
                     break;
             }
@@ -266,42 +234,64 @@ function checkPermissions(interaction, cmdName, target) {
 
 async function tryBanUser(interaction, target, cmdName, reason, deletePeriod) {
     try {
-        if (await checkIfBanned(interaction, target)) {
-            console.log('ban was called on a banned user');
-            return false; // user can't be banned
+        const banList = await getBanList(interaction);
+        if (banList) {
+            if (await isUserBanned(banList, target, interaction)) {
+                return false; // user can't be banned
+            }
+            try {
+                await sendDirectMessage(interaction, target, cmdName, reason);
+            } catch (dmError) {
+                console.log(`DM could not be sent. Error: ${dmError.message}`);
+            }
+            await interaction.guild.members.ban(target, { deleteMessageSeconds: deletePeriod, reason: reason });
+            await interaction.reply(`**${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)}ned** ${target}: ${reason}`);
+            return true; // successful ban
+        } else {
+            await interaction.reply({ content: 'Something went wrong while fetching the ban list - try again in a moment.', ephemeral: true });
+            return false; //failed ban
         }
-        // Attempt to send a direct message to the target
-        try {
-            await sendDirectMessage(interaction, target, cmdName, reason);
-        } catch (dmError) {
-            console.log(`DM could not be sent. Error: ${dmError.message}`);
-        }
-        await interaction.guild.members.ban(target, { deleteMessageSeconds: deletePeriod, reason: reason });
-        await interaction.reply(`**${cmdName.charAt(0).toUpperCase() + cmdName.slice(1)}ned** ${target}: ${reason}`);
-        return true; // successful ban
-    } catch (err) {
+    }
+    catch (err) {
         handleError(interaction, err);
-        return false; 
+        return false;
+    }
+}
+
+
+
+/**
+ * Retrieves the ban list for the guild from the Discord API.
+ * This operation may fail due to rate limiting, server issues, or some other issue
+ * @param {Interaction} interaction - An interaction object from Discord.js
+ * @returns {Collection|null} A collection of banned users, or null if there's an error
+ */
+async function getBanList(interaction) {
+    try {
+        const bannedUsers = await interaction.guild.bans.fetch();
+        return bannedUsers;
+    } catch (error) {
+        console.error(`ERROR fetching ban list: ${error.message}`);
+        return null; //is this bad practice in js?
     }
 }
 
 
 /**
- * Checks if a target user is already banned in the guild
+ * Checks if a target user is banned in the guild
+ * @param {Collection} banList - A collection of banned users
+ * @param {User} target - The target user for the command
  * @param {Interaction} interaction - An interaction object from Discord.js
- * @param {User} target - The target user the command is being used on
  * @returns {boolean} True if the target user is banned, false otherwise
  */
-async function checkIfBanned(interaction, target) {
-    const bannedUsers = await interaction.guild.bans.fetch();
-    if (bannedUsers.get(target.id)) {
+async function isUserBanned(banList, target, interaction) {
+    if (banList.get(target.id)) {
+        console.log('BAN was called on a banned user');
         await interaction.reply({ content: `${target} is already banned.`, ephemeral: true });
-        return true; // Target is already banned
+        return true; // target already banned
     }
-    return false; // Target is not banned
+    return false; // target not currently banned
 }
-
-
 
 
 /**
@@ -312,24 +302,10 @@ async function checkIfBanned(interaction, target) {
  * @param {string} reason - The reason for the action (optional)
  */
 async function sendDirectMessage(interaction, target, cmd_name, reason) {
-        if (interaction.guild.members.cache.has(target.id)) { // this shouldn't be cache.
-            await target.send(buildMessage(cmd_name, interaction, reason));
-        }
+    if (interaction.guild.members.cache.has(target.id)) { // this shouldn't be cache.
+        await target.send(buildMessage(cmd_name, interaction, reason));
+    }
 }
-  
-
-
-/** DUPLICATE EXTRACT TO A MODULE
- * Updates the interaction response to display an error
- * @param {Interaction} interaction - the interaction created by discord.js
- * @param {error} err - the error object created when a command fails
- */
-function handleError(interaction, err) {
-    interaction.deleteReply();
-    interaction.followUp({ content: `Something went wrong:\n${err.message}`, ephemeral: true});
-    console.error(err);
-}
-
 
 /**
  * Creates a formatted output string explaining the action taken; maybe make this an embed?
@@ -341,4 +317,21 @@ function handleError(interaction, err) {
 function buildMessage(cmd_name, interaction, reason) {
     let actionMessage = cmd_name.includes('kick') ? 'kicked' : cmd_name.includes('ban') ? cmd_name + 'ned' : '';
     return `You were ${actionMessage} from ${interaction.guild.name}:\n${reason}`;
+}
+
+
+
+/** DUPLICATE EXTRACT TO A MODULE
+ * Updates the interaction response to display an error
+ * @param {Interaction} interaction - the interaction created by discord.js
+ * @param {error} err - the error object created when a command fails
+ */
+function handleError(interaction, target, err) {
+    if (err.code === 10026) { // discord's api error for an unknown ban
+        interaction.reply({ content: `${target} is not banned.`, ephemeral: true });
+    } else {
+    interaction.deleteReply();
+    interaction.followUp({ content: `Something went wrong:\n${err.message}`, ephemeral: true});
+    console.error(err);
+    }
 }
