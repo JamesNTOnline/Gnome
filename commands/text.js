@@ -6,7 +6,7 @@ const { buildReverseIndex } = require('../utilities/data-manager.js');
 //"fonts", characters, and translations
 const googleTranslate = require('@iamtraction/google-translate');
 const styles = require('../utilities/text-styles.json'); //alternate character appearance data
-const vocabulary = require('../utilities/words.json'); //slang translation data
+const vocabulary = require('../utilities/phrases.json'); //slang translation data
 const emojiPhrases = require("emojilib"); 
 phraseEmojis = buildReverseIndex(emojiPhrases); 
 
@@ -61,7 +61,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 // await interaction.reply('Beautifying text...');
                 // const text = interaction.options.getString('text');
                 //pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
-                editedText = replaceWordsInText(text, cmd_name);
+                editedText = replacePhrasesInText (text, cmd_name);
                 editedText = replaceWordEndings(editedText, cmd_name);
                 await interaction.editReply(editedText);
                 // } catch (error){
@@ -71,7 +71,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 break;
             case "zoomer":
                 //pattern = new RegExp(Object.keys(wordData).join('|'), 'gi');
-                editedText = replaceWordsInText(text, cmd_name, true);
+                editedText = replacePhrasesInText (text, cmd_name, true);
                 editedText = replaceWordEndings(editedText, cmd_name);
                 await interaction.editReply(editedText); //move this?
                 break;
@@ -110,7 +110,15 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 };
 
 
-function replaceWordsInText(text, translationKey, allowPartials = false) {
+
+/**
+ * Matches phrases in the 
+ * @param {string} text - The input text to be processed.
+ * @param {string} translationKey - The key used to access the translation data from the vocabulary.
+ * @param {boolean} allowPartials - A flag to indicate whether partial matching is allowed.
+ * @returns {string} The text with phrases replaced according to the specified translation.
+ */
+function replacePhrasesInText(text, translationKey, allowPartials = false) {
     const wordData = vocabulary[translationKey];
     let pattern;
     if (!wordData) {

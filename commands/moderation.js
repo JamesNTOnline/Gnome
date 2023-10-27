@@ -35,8 +35,6 @@ exporting a slashcommandbuilder object.
 this object needs to have a name and description (required by command.toJSON)
 */
 module.exports = {
-    checkIfBanned,
-    tryBanUser,
     data: new SlashCommandBuilder()
         .setName('mod')
         .setDescription('Commands to remove unruly users')
@@ -136,23 +134,20 @@ module.exports = {
                     break;
                 /**
                  * Softban is a ban followed by an immediate reversal, which serves to quickly purge messages
-                 * @todo: could make the delete_time variable. for now it is max
                  */
                 case 'softban':
-                    success = tryBanUser(interaction, target, cmdName, reason, 86400);
-                    try{
-                        if(success){
+                    try {
+                        success = tryBanUser(interaction, target, cmdName, reason, 86400);
+                        if (success) {
                             await interaction.guild.members.unban(target);
                         }
                     } catch (err) {
-                        interaction.followUp({ content: `Something went wrong; user may still be banned`, ephemeral: true});
-                        console.error(err);                        
+                        interaction.followUp({ content: `Something went wrong; user may still be banned`, ephemeral: true });
+                        console.error(err);
                     }
                     break;
-                  
                 /**
                  * Reverses a ban for a specific user
-                 * @todo
                  */
                 case 'unban':
                     try {
@@ -234,8 +229,8 @@ function checkPermissions(interaction, cmdName, target) {
 
 async function tryBanUser(interaction, target, cmdName, reason, deletePeriod) {
     try {
-        const banList = await getBanList(interaction);
-        if (banList) {
+        const banList = await getBanList(interaction); //retrieve banned user collection
+        if (banList) { 
             if (await isUserBanned(banList, target, interaction)) {
                 return false; // user can't be banned
             }
