@@ -4,31 +4,29 @@ const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const { buildReverseIndex } = require('../utilities/data-manager.js');
 
 //"fonts", characters, and translations
-const googleTranslate = require('@iamtraction/google-translate');
+const gTranslate = require('@iamtraction/google-translate');
 const styles = require('../utilities/text-styles.json'); //alternate character appearance data
 const vocabulary = require('../utilities/phrases.json'); //slang translation data
-const emojiPhrases = require("emojilib"); 
-phraseEmojis = buildReverseIndex(emojiPhrases); 
+const emojiWords = require("emojilib"); 
+wordEmojis = buildReverseIndex(emojiWords); 
 
 //text translation commands
-
-let emojify = new SubOptionBuilder('emojify')
-    .addRequiredTextOption()
-    .getSubCmd();
-let cuteify = new SubOptionBuilder('cuteify').getSubCmd();
 let jarjar = new SubOptionBuilder('jarjar')
     .addRequiredTextOption()
     .getSubCmd();
 let zoomer = new SubOptionBuilder('zoomer') //make a subclass for text-only-commands?
     .addRequiredTextOption()
     .getSubCmd();
-let random = new SubOptionBuilder('random').getSubCmd();
+let translate = new SubOptionBuilder('translate').getSubCmd();
+//text decoration commands
+let emojify = new SubOptionBuilder('emojify')
+    .addRequiredTextOption()
+    .getSubCmd();
 let clap = new SubOptionBuilder('clap').getSubCmd();
 let style = new SubOptionBuilder('style')
     .addRequiredTextOption()
     .addSimpleChoices('style', Object.keys(styles))
     .getSubCmd(); //add choices
-let translate = new SubOptionBuilder('translate').getSubCmd();
 
 
 
@@ -36,9 +34,12 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
     data: new SlashCommandBuilder()
         .setName('text')
         .setDescription('Transforms some provided text')
-        .addSubcommand(style)
         .addSubcommand(jarjar)
-        .addSubcommand(zoomer),
+        .addSubcommand(zoomer)
+        .addSubcommand(translate)
+        .addSubcommand(emojify)
+        .addSubcommand(clap)
+        .addSubcommand(style),
 
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand();
@@ -50,56 +51,41 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         try{
         await interaction.reply('Beautifying text...');
         switch (cmd_name) { // processing the options
-            case "emojify":
-                await interaction.reply('ph');
-                break;
-            case "cuteify":
-                await interaction.reply('ph');
-                break;
             case "jarjar":
-                // try {
-                // await interaction.reply('Beautifying text...');
-                // const text = interaction.options.getString('text');
-                //pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
                 editedText = replacePhrasesInText (text, cmd_name);
                 editedText = replaceWordEndings(editedText, cmd_name);
                 await interaction.editReply(editedText);
-                // } catch (error){
-                //     console.error('Error occurred during style command:', error.message);
-                //     await interaction.editReply('An error occurred while processing the style command.');
-                // }
                 break;
             case "zoomer":
-                //pattern = new RegExp(Object.keys(wordData).join('|'), 'gi');
                 editedText = replacePhrasesInText (text, cmd_name, true);
                 editedText = replaceWordEndings(editedText, cmd_name);
                 await interaction.editReply(editedText); //move this?
                 break;
-            case "random":
+            case "translate":
                 await interaction.reply('ph');
+                break;
+            case "emojify":
+                const emojis = wordEmojis['birth'];
+                if (emojis) {
+                  const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                  console.log(randomEmoji);
+                  await interaction.editReply(randomEmoji);
+                } else {
+                  console.log('No emojis found for "birth"');
+                }
                 break;
             case "clap":
                 await interaction.reply('ph');
                 break;
             case "style":
-                // try {
-                    //await interaction.reply('Beautifying text...')
-                    // const style = interaction.options.getString('style');
-                    editedText = applyStyleToText(text, style);
-                    await interaction.editReply(editedText);
-                // } catch (error) {
-                //     console.error('Error occurred during style command:', error.message);
-                //     await interaction.editReply('An error occurred while processing the style command.');
-                // }
-                break;
-            case "translate":
-                await interaction.reply('ph');
+                editedText = applyStyleToText(text, style);
+                await interaction.editReply(editedText);
                 break;
         }
 
     } catch (error) {
     console.error('Error occurred during style command:', error.message);
-    await interaction.editReply('An error occurred while processing the style command.');
+    await interaction.editReply('An error occurred while processing the text.');
 }
 
 
@@ -112,11 +98,13 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
 
 /**
- * Matches phrases in the 
+ * Matches phrases in the input text.
+ * Why not tokenize the sentence and go word by word? Some of the phrases to match keys in the vocab
+ * are multiple words: "see you later": "selongabye",
  * @param {string} text - The input text to be processed.
  * @param {string} translationKey - The key used to access the translation data from the vocabulary.
- * @param {boolean} allowPartials - A flag to indicate whether partial matching is allowed.
- * @returns {string} The text with phrases replaced according to the specified translation.
+ * @param {boolean} allowPartials - A flag to indicate whether partially matching an input word is allowed.
+ * @returns {string} The text with replacements.
  */
 function replacePhrasesInText(text, translationKey, allowPartials = false) {
     const wordData = vocabulary[translationKey];
@@ -126,9 +114,6 @@ function replacePhrasesInText(text, translationKey, allowPartials = false) {
         return text;
     }
     let translatedText = text;
-
-    // Create a regular expression pattern for matching all phrases
-    // uses the | (OR) operator to match any specified phrase
     if(allowPartials){
         pattern = new RegExp(Object.keys(wordData).join('|'), 'gi');
     } else {

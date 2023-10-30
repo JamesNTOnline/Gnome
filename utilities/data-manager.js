@@ -7,13 +7,18 @@
  * @returns {Map} - A Map object where words are keys and values are associated values.
  */
 function buildReverseIndex(data) {
-    const index = new Map();
+    const reverseIndex = {};
     for (const key in data) {
-        for (const entry of data[key]) {
-            index.set(entry, data[key]);
+      for (const entry of data[key]) {
+        if (!reverseIndex[entry]) {
+          reverseIndex[entry] = [];
         }
+        reverseIndex[entry].push(key);
+      }
     }
-    return index;
-}
+  
+    return reverseIndex;
+  }
+  
 
 module.exports = { buildReverseIndex };
