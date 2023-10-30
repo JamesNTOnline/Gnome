@@ -7,7 +7,7 @@ const { buildReverseIndex } = require('../utilities/data-manager.js');
 const gTranslate = require('@iamtraction/google-translate');
 const styles = require('../utilities/text-styles.json'); //alternate character appearance data
 const vocabulary = require('../utilities/phrases.json'); //slang translation data
-const emojiWords = require("emojilib"); 
+const emojiWords = require('emojilib'); 
 wordEmojis = buildReverseIndex(emojiWords); 
 
 //text translation commands
@@ -45,43 +45,49 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand();
-        const text = interaction.options.getString('text') ?? "";
-        const style = interaction.options.getString('style') ?? "";
-        let editedText = "";
+        const text = interaction.options.getString('text') ?? '';
+        const style = interaction.options.getString('style') ?? '';
+        let editedText = '';
         let pattern;
         
         try{
         await interaction.reply('Beautifying text...');
         switch (cmd_name) { // processing the options
-            case "jarjar":
+            case 'jarjar':
                 editedText = replacePhrasesInText (text, cmd_name);
                 editedText = replaceWordEndings(editedText, cmd_name);
                 await interaction.editReply(editedText);
                 break;
-            case "zoomer":
+            case 'zoomer':
                 editedText = replacePhrasesInText (text, cmd_name, true);
                 editedText = replaceWordEndings(editedText, cmd_name);
                 await interaction.editReply(editedText); //move this?
                 break;
-            case "translate":
-                await interaction.reply('ph');
+            case 'translate':
+                await interaction.editReply('ph');
                 break;
-            case "emojify":
-                const emojis = wordEmojis['birth'];
-                if (emojis) {
-                  const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                  console.log(randomEmoji);
-                  await interaction.editReply(randomEmoji);
-                } else {
-                  console.log('No emojis found for "birth"');
+            case 'emojify':
+                const words = text.split(' ');
+                for (const word of words){
+                    const emojis = wordEmojis[word]; //get the emojis associated with the word
+                    if(emojis){
+                        const leftEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                        const rightEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                        editedText += `${leftEmoji} ${word} ${rightEmoji} `;
+                    } else { // no match, just insert a random emoji
+                        //const allEmojis = Object.values(wordEmojis).flat();
+                        //const randomEmoji = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+                        editedText += `${word} `;
+                    }
                 }
+                await interaction.editReply(editedText.trim());
                 break;
-            case "clap":
-                const emoji = "👏";
-                const editedText = text.split(' ').join(` ${emoji} `);
+            case 'clap':
+                const emoji = '👏';
+                editedText = text.split(' ').join(` ${emoji} `);
                 await interaction.editReply(editedText);
                 break;
-            case "style":
+            case 'style':
                 editedText = applyStyleToText(text, style);
                 await interaction.editReply(editedText);
                 break;
@@ -89,7 +95,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
     } catch (error) {
     console.error('Error occurred during style command:', error.message);
-    await interaction.editReply('An error occurred while processing the text.');
+    await interaction.editReply(`An error occurred while processing the text: ${error.message}`);
 }
 
 
@@ -163,7 +169,7 @@ function applyCasing(original, replacement) {
 function replaceWordEndings(text, translationKey) {
     const customReplacements = vocabulary.endings[translationKey];
     if (!customReplacements) {
-        console.log(`No vocabulary found for key "${translationKey}"`);
+        throw new Error(`No vocabulary found for key "${translationKey}"`);
         return text;
     }
     let modifiedText = text;
