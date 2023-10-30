@@ -22,7 +22,9 @@ let translate = new SubOptionBuilder('translate').getSubCmd();
 let emojify = new SubOptionBuilder('emojify')
     .addRequiredTextOption()
     .getSubCmd();
-let clap = new SubOptionBuilder('clap').getSubCmd();
+let clap = new SubOptionBuilder('clap')
+    .addRequiredTextOption()
+    .getSubCmd();
 let style = new SubOptionBuilder('style')
     .addRequiredTextOption()
     .addSimpleChoices('style', Object.keys(styles))
@@ -75,7 +77,9 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 }
                 break;
             case "clap":
-                await interaction.reply('ph');
+                const emoji = "👏";
+                const editedText = text.split(' ').join(` ${emoji} `);
+                await interaction.editReply(editedText);
                 break;
             case "style":
                 editedText = applyStyleToText(text, style);
