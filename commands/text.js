@@ -4,11 +4,14 @@ const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const { buildReverseIndex } = require('../utilities/data-manager.js');
 
 //"fonts", characters, and translations
-const gTranslate = require('@iamtraction/google-translate');
+const {translate: gTranslate, languages} = require('@iamtraction/google-translate');
+const langChoices = Object.values(languages).filter(value => value !== "Automatic");
 const styles = require('../utilities/text-styles.json'); //alternate character appearance data
 const vocabulary = require('../utilities/phrases.json'); //slang translation data
 const emojiWords = require('emojilib'); 
 wordEmojis = buildReverseIndex(emojiWords); 
+
+console.log(langChoices);
 
 //text translation commands
 let jarjar = new SubOptionBuilder('jarjar')
@@ -17,7 +20,8 @@ let jarjar = new SubOptionBuilder('jarjar')
 let zoomer = new SubOptionBuilder('zoomer') //make a subclass for text-only-commands?
     .addRequiredTextOption()
     .getSubCmd();
-let translate = new SubOptionBuilder('translate').getSubCmd();
+let translate = new SubOptionBuilder('translate')
+    .getSubCmd();
 //text decoration commands
 let emojify = new SubOptionBuilder('emojify')
     .addRequiredTextOption()
@@ -47,62 +51,59 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         const cmd_name = interaction.options.getSubcommand();
         const text = interaction.options.getString('text') ?? '';
         const style = interaction.options.getString('style') ?? '';
+        const language = interaction.options.getString('language') ?? '';
         let editedText = '';
         let pattern;
-        
-        try{
-        await interaction.reply('Beautifying text...');
-        switch (cmd_name) { // processing the options
-            case 'jarjar':
-                editedText = replacePhrasesInText (text, cmd_name);
-                editedText = replaceWordEndings(editedText, cmd_name);
-                await interaction.editReply(editedText);
-                break;
-            case 'zoomer':
-                editedText = replacePhrasesInText (text, cmd_name, true);
-                editedText = replaceWordEndings(editedText, cmd_name);
-                await interaction.editReply(editedText); //move this?
-                break;
-            case 'translate':
-                await interaction.editReply('ph');
-                break;
-            case 'emojify':
-                const words = text.split(' ');
-                for (const word of words){
-                    const emojis = wordEmojis[word]; //get the emojis associated with the word
-                    if(emojis){
-                        const leftEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                        const rightEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                        editedText += `${leftEmoji} ${word} ${rightEmoji} `;
-                    } else { // no match, just insert a random emoji
-                        //const allEmojis = Object.values(wordEmojis).flat();
-                        //const randomEmoji = allEmojis[Math.floor(Math.random() * allEmojis.length)];
-                        editedText += `${word} `;
+
+        try {
+            await interaction.reply('Beautifying text...');
+            switch (cmd_name) { // processing the options
+                case 'jarjar':
+                    editedText = replacePhrasesInText(text, cmd_name);
+                    editedText = replaceWordEndings(editedText, cmd_name);
+                    await interaction.editReply(editedText);
+                    break;
+                case 'zoomer':
+                    editedText = replacePhrasesInText(text, cmd_name, true);
+                    editedText = replaceWordEndings(editedText, cmd_name);
+                    await interaction.editReply(editedText); //move this?
+                    break;
+                case 'translate':
+                    editedText = await gTranslate(text, { to: language })
+                    await interaction.editReply(editedText)
+                    break;
+                case 'emojify':
+                    const words = text.split(' ');
+                    for (const word of words) {
+                        const emojis = wordEmojis[word]; //get the emojis associated with the word
+                        if (emojis) {
+                            const leftEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                            const rightEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                            editedText += `${leftEmoji} ${word} ${rightEmoji} `;
+                        } else { // no match, just insert a random emoji
+                            //const allEmojis = Object.values(wordEmojis).flat();
+                            //const randomEmoji = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+                            editedText += `${word} `;
+                        }
                     }
-                }
-                await interaction.editReply(editedText.trim());
-                break;
-            case 'clap':
-                const emoji = '👏';
-                editedText = text.split(' ').join(` ${emoji} `);
-                await interaction.editReply(editedText);
-                break;
-            case 'style':
-                editedText = applyStyleToText(text, style);
-                await interaction.editReply(editedText);
-                break;
+                    await interaction.editReply(editedText.trim());
+                    break;
+                case 'clap':
+                    const emoji = '👏';
+                    editedText = text.split(' ').join(` ${emoji} `);
+                    await interaction.editReply(editedText);
+                    break;
+                case 'style':
+                    editedText = applyStyleToText(text, style);
+                    await interaction.editReply(editedText);
+                    break;
+            }
+
+        } catch (error) {
+            console.error('Error processing the text:', error.message);
+            await interaction.editReply(`Couldn't process the text: ${error.message}`);
         }
-
-    } catch (error) {
-    console.error('Error occurred during style command:', error.message);
-    await interaction.editReply(`An error occurred while processing the text: ${error.message}`);
-}
-
-
-
-},
-
-
+    },
 };
 
 
@@ -120,8 +121,7 @@ function replacePhrasesInText(text, translationKey, allowPartials = false) {
     const wordData = vocabulary[translationKey];
     let pattern;
     if (!wordData) {
-        console.log(`No vocabulary found for key "${translationKey}"`);
-        return text;
+        throw new Error (`No "${translationKey}" phrases are available`);
     }
     let translatedText = text;
     if(allowPartials){
@@ -169,8 +169,7 @@ function applyCasing(original, replacement) {
 function replaceWordEndings(text, translationKey) {
     const customReplacements = vocabulary.endings[translationKey];
     if (!customReplacements) {
-        throw new Error(`No vocabulary found for key "${translationKey}"`);
-        return text;
+        throw new Error(`No "${translationKey}" word endings available`);
     }
     let modifiedText = text;
     for (const [endingToReplace, replacement] of Object.entries(customReplacements)) {
@@ -183,7 +182,7 @@ function replaceWordEndings(text, translationKey) {
 
 function applyStyleToText(text, styleName) {
     if (!styles[styleName]) {
-        throw new Error('Style does not exist, see text-styles.json');
+        throw new Error('This style is not available');
     }
     const styleMap = styles[styleName];
     const stylizedText = text.replace(/./g, (char) => styleMap[char] || char);
