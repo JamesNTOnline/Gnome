@@ -20,7 +20,8 @@ let jarjar = new SubOptionBuilder('jarjar')
 let zoomer = new SubOptionBuilder('zoomer') //make a subclass for text-only-commands?
     .addRequiredTextOption()
     .getSubCmd();
-let translate = new SubOptionBuilder('translate')
+let translate = new SubOptionBuilder('translate') 
+    .addSimpleChoices('language', [])
     .getSubCmd();
 //text decoration commands
 let emojify = new SubOptionBuilder('emojify')
@@ -50,8 +51,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
     async execute(interaction) {
         const cmd_name = interaction.options.getSubcommand();
         const text = interaction.options.getString('text') ?? '';
-        const style = interaction.options.getString('style') ?? '';
-        const language = interaction.options.getString('language') ?? '';
+        const choice = interaction.options.getString('style') ?? interaction.options.getString('language') ?? '';
         let editedText = '';
         let pattern;
 
@@ -69,7 +69,11 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                     await interaction.editReply(editedText); //move this?
                     break;
                 case 'translate':
-                    editedText = await gTranslate(text, { to: language })
+
+
+
+
+                    editedText = await gTranslate(text, { to: choice })
                     await interaction.editReply(editedText)
                     break;
                 case 'emojify':
@@ -94,7 +98,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                     await interaction.editReply(editedText);
                     break;
                 case 'style':
-                    editedText = applyStyleToText(text, style);
+                    editedText = applyStyleToText(text, choice);
                     await interaction.editReply(editedText);
                     break;
             }

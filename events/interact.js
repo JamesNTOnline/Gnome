@@ -1,19 +1,26 @@
-const {Events} = require('discord.js');
+const { Events } = require('discord.js');
 
 module.exports = {
     name: Events.InteractionCreate,
-    async execute(interaction){
-        if(!interaction.isChatInputCommand()) return;
-        //match the command to the client's list of commands
+    async execute(interaction) {
+        const isExecutable = interaction.isChatInputCommand(); //check which type of interaction it is
+        const isAutocomplete = interaction.isAutocomplete();
+        if (!isExecutable && !isAutocomplete) return; //stop if neither
+
         const command = interaction.client.commands.get(interaction.commandName);
-        if(!command){ //no match, error
-            console.error(`No command matching ${interaction.commandName} found!`);
+        if (!command) { //stop if this is not a valid command
+            console.error(`No command matching ${interaction.commandName} found.`);
+            return;
         }
-        try { //try to execute the command using execute method
-            await command.execute(interaction);
-        } catch (error){ //catch any errors caused during runtime and report
+        try {
+            if (isExecutable) {
+                await command.execute(interaction);
+            } else if (isAutocomplete) {
+                await command.autocomplete(interaction);
+            }
+        } catch (error) {
             console.error(error);
-            console.error('Error while executing command');
+            console.error(`Error while handling ${isExecutable ? 'command' : 'auto-completion'}.`);
         }
     }
 };

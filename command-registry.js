@@ -26,7 +26,7 @@ function getDescription(command) {
     return "Command not found.";
 }
 
-function getOptionDescription(command){
+function getOptionDescription(command){ //TODO
     
 }
 

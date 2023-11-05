@@ -114,10 +114,11 @@ class SubOptionBuilder {
 
     /**
      * Adds choices to the sub-command builder
-     * The name and value will be the same string 
+     * The name and value will be the same string
+     * Limitation: 25 choices
      * @param {string[]} choices - The list of choices to add
      */
-    addSimpleChoices(optionName, choices) {
+    addSimpleChoices(optionName, choices) { 
         if (!Array.isArray(choices)) {
             throw new Error('Choices should be an array.');
         }
