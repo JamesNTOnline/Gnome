@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/TheRealJim/Dankbot#readme",
   "dependencies": {
-    "@iamtraction/google-translate": "^2.0.1",
+    "bing-translate-api": "^2.9.2",
     "discord.js": "^14.5.0",
     "emojilib": "^3.0.10",
     "node-cron": "^3.0.2",

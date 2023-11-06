@@ -4,8 +4,8 @@ const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const { buildReverseIndex } = require('../utilities/data-manager.js');
 
 //"fonts", characters, and translations
-const {translate, languages} = require('@iamtraction/google-translate');
-const langChoices = Object.values(languages).filter(value => value !== "Automatic");
+const {translate: bingTranslate, lang} = require('bing-translate-api');
+const langChoices = Object.values(lang.LANGS).filter(value => value !== 'Auto-detect');
 const styles = require('../utilities/text-styles.json'); //alternate character appearance data
 const vocabulary = require('../utilities/phrases.json'); //slang translation data
 const emojiWords = require('emojilib'); 
@@ -20,7 +20,7 @@ let jarjar = new SubOptionBuilder('jarjar')
 let zoomer = new SubOptionBuilder('zoomer') //make a subclass for text-only-commands?
     .addRequiredTextOption()
     .getSubCmd();
-let translation = new SubOptionBuilder('translate')
+let translate = new SubOptionBuilder('translate')
     .addRequiredTextOption()
     .getSubCmd()
     .addStringOption(option =>
@@ -48,7 +48,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         .setDescription('Transforms some provided text')
         .addSubcommand(jarjar)
         .addSubcommand(zoomer)
-        .addSubcommand(translation)
+        .addSubcommand(translate)
         .addSubcommand(emojify)
         .addSubcommand(clap)
         .addSubcommand(style),
@@ -61,17 +61,18 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
             choices = langChoices;
         }
         // show an initial 25 options; input starts empty
-        if (focusedOption.value === '') {
+        let input = focusedOption.value;
+        if (input === '') {
             await interaction.respond(
                 choices.slice(0, 25).map(choice => ({ name: choice, value: choice }))
             );
         } else {
             // string checking needed here 
-            const filtered = choices.filter(choice => typeof choice === 'string' && choice.startsWith(focusedOption.value));
+            const filtered = choices.filter(choice => typeof choice === 'string' && choice.toLowerCase().startsWith(input));
             const updatedChoices = filtered.slice(0, 25); // Display up to 25 filtered choices
 
-            await interaction.respond(
-                updatedChoices.map(choice => ({ name: choice, value: choice }))
+            await interaction.respond( //update the choice list
+                updatedChoices.map(choice => ({ name: choice, value: choice.toLowerCase() }))
             );
         }
     },
@@ -96,8 +97,8 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                     await interaction.editReply(editedText); //move this?
                     break;
                 case 'translate':
-                    editedText = await translate(text, { to: 'en' })
-                    await interaction.editReply(editedText)
+                    editedText = await bingTranslate(text, null, choice);
+                    await interaction.editReply(editedText.translation)
                     break;
                 case 'emojify':
                     const words = text.split(' ');
