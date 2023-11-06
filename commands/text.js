@@ -4,7 +4,7 @@ const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const { buildReverseIndex } = require('../utilities/data-manager.js');
 
 //"fonts", characters, and translations
-const {translate: gTranslate, languages} = require('@iamtraction/google-translate');
+const {translate, languages} = require('@iamtraction/google-translate');
 const langChoices = Object.values(languages).filter(value => value !== "Automatic");
 const styles = require('../utilities/text-styles.json'); //alternate character appearance data
 const vocabulary = require('../utilities/phrases.json'); //slang translation data
@@ -20,9 +20,14 @@ let jarjar = new SubOptionBuilder('jarjar')
 let zoomer = new SubOptionBuilder('zoomer') //make a subclass for text-only-commands?
     .addRequiredTextOption()
     .getSubCmd();
-let translate = new SubOptionBuilder('translate') 
-    .addSimpleChoices('language', [])
-    .getSubCmd();
+let translation = new SubOptionBuilder('translate')
+    .addRequiredTextOption()
+    .getSubCmd()
+    .addStringOption(option =>
+        option.setName('language')
+            .setDescription('What language to output')
+        .setAutocomplete(true)
+        .setRequired(true));
 //text decoration commands
 let emojify = new SubOptionBuilder('emojify')
     .addRequiredTextOption()
@@ -43,12 +48,34 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
         .setDescription('Transforms some provided text')
         .addSubcommand(jarjar)
         .addSubcommand(zoomer)
-        .addSubcommand(translate)
+        .addSubcommand(translation)
         .addSubcommand(emojify)
         .addSubcommand(clap)
         .addSubcommand(style),
 
-    async execute(interaction) {
+    async autocomplete(interaction) { //deal here with updating the UI as a user types
+        const focusedOption = interaction.options.getFocused(true);
+        let choices ;
+
+        if (focusedOption.name === 'language') {
+            choices = langChoices;
+        }
+        // show an initial 25 options; input starts empty
+        if (focusedOption.value === '') {
+            await interaction.respond(
+                choices.slice(0, 25).map(choice => ({ name: choice, value: choice }))
+            );
+        } else {
+            // string checking needed here 
+            const filtered = choices.filter(choice => typeof choice === 'string' && choice.startsWith(focusedOption.value));
+            const updatedChoices = filtered.slice(0, 25); // Display up to 25 filtered choices
+
+            await interaction.respond(
+                updatedChoices.map(choice => ({ name: choice, value: choice }))
+            );
+        }
+    },
+    async execute(interaction) { //deals with what happens when the user pushes 'enter'
         const cmd_name = interaction.options.getSubcommand();
         const text = interaction.options.getString('text') ?? '';
         const choice = interaction.options.getString('style') ?? interaction.options.getString('language') ?? '';
@@ -69,11 +96,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                     await interaction.editReply(editedText); //move this?
                     break;
                 case 'translate':
-
-
-
-
-                    editedText = await gTranslate(text, { to: choice })
+                    editedText = await translate(text, { to: 'en' })
                     await interaction.editReply(editedText)
                     break;
                 case 'emojify':
@@ -105,7 +128,7 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
 
         } catch (error) {
             console.error('Error processing the text:', error.message);
-            await interaction.editReply(`Couldn't process the text: ${error.message}`);
+            await interaction.editReply(`Couldn't process the text`);
         }
     },
 };
