@@ -201,19 +201,57 @@
         "subcommands": [
             {
                 "name": "display",
-                "description": "Displays an emoji in a larger size"
+                "description": "Displays an emoji in a larger size",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "emoji",
+                        "description": "The emoji to display",
+                        "required": true
+                    }
+                ]
             },
             {
                 "name": "add",
-                "description": "Adds an emoji to the server"
+                "description": "Adds an emoji to the server",
+                "options": [
+                    {
+                        "type": 11,
+                        "name": "attachment",
+                        "description": "An image file to turn into an emoji",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "url",
+                        "description": "The URL of the emoji",
+                        "required": true
+                    }
+                ]
             },
             {
-                "name": "remove",
-                "description": "Removes an emoji from the emoji list"
+                "name": "delete",
+                "description": "Removes an emoji from the emoji list",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "emoji",
+                        "description": "The emoji to be deleted",
+                        "required": true
+                    }
+                ]
             },
             {
-                "name": "score",
-                "description": "Shows the reaction score for a user"
+                "name": "info",
+                "description": "Displays information about an emoji",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "emoji",
+                        "description": "The emoji to get information about",
+                        "required": true
+                    }
+                ]
             }
         ]
     },
