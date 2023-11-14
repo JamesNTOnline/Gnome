@@ -1,3 +1,7 @@
+/**
+ * TODO: tidy up a bit, additional comments, extra error handling?
+ */
+
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const SubOptionBuilder = require('../utilities/sub-option-builder.js');
@@ -12,6 +16,12 @@ const emojiWords = require('emojilib');
 wordEmojis = buildReverseIndex(emojiWords); 
 
 console.log(langChoices);
+
+// Update choices for the "style" option under "aesthetic"
+//jsonStructure.subcommands.find(sub => sub.name === 'aesthetic').options.find(opt => opt.name === 'style').choices = Object.keys(styles).map(choice => ({ name: choice, value: choice }));
+
+// Now jsonStructure is updated with choices from text-styles.json
+//console.log(JSON.stringify(jsonStructure, null, 2));
 
 //text translation commands
 let jarjar = new SubOptionBuilder('jarjar')
@@ -35,7 +45,7 @@ let emojify = new SubOptionBuilder('emojify')
 let clap = new SubOptionBuilder('clap')
     .addRequiredTextOption()
     .getSubCmd();
-let style = new SubOptionBuilder('style')
+let style = new SubOptionBuilder('aesthetic')
     .addRequiredTextOption()
     .addSimpleChoices('style', Object.keys(styles))
     .getSubCmd(); //add choices

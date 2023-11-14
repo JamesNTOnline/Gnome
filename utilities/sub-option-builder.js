@@ -128,7 +128,7 @@ class SubOptionBuilder {
             option.setName(optionName)
                 .setDescription('Select an option from the list')
                 .addChoices(...choicesList)
-            .setRequired(true)
+                .setRequired(true)
         );
         return this;
     }

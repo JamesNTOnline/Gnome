@@ -1,4 +1,9 @@
-TODO: Rewrite this
+WIP:
+text commands
+- more emoji identifiers for emojify
+- grammar updates
+- selectable emoji for 'clap' command (rename command)
+
 
 
 COMMAND STRUCTURE NOTES:

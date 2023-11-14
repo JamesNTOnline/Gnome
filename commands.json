@@ -5,46 +5,196 @@
         "subcommands": [
             {
                 "name": "kick",
-                "description": "Kicks a user, allows rejoining",
+                "description": "Kicks a user; they can rejoin using an invite link",
                 "options": [
                     {
-                        "name": "user",
-                        "description": "This could be an example of how to do command generation",
-                        "how": "use the json present to determine which option functions to call on an object",
-                        "maxlength": 100,
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @ or 18-digit ID of a user",
                         "required": true
                     },
                     {
-
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the kick",
+                        "required": false,
+                        "maxLength": 512
                     }
                 ]
             },
             {
                 "name": "ban",
-                "description": "Bans a user, prevents rejoining"
+                "description": "Bans a user; they wont be able to rejoin",
+                "options": [
+                    {
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @ or 18-digit ID of a user",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the ban",
+                        "required": true,
+                        "maxLength": 512
+                    },
+                    {
+                        "type": 4,
+                        "name": "delete",
+                        "description": "The number of days' worth of messages to delete",
+                        "required": true,
+                        "choices": [
+                            {
+                                "name": "Don't delete any",
+                                "value": 0
+                            },
+                            {
+                                "name": "Last day",
+                                "value": 86400
+                            },
+                            {
+                                "name": "Last 3 days",
+                                "value": 259200
+                            },
+                            {
+                                "name": "Last 7 days",
+                                "value": 604800
+                            }
+                        ],
+                        "minValue": 0,
+                        "maxValue": 604800
+                    }
+                ]
             },
             {
                 "name": "unban",
-                "description": "Undoes a previous ban"
+                "description": "Undoes a previous ban",
+                "options": [
+                    {
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @ or 18-digit ID of a user",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the unban",
+                        "required": false,
+                        "maxLength": 512
+                    }
+                ]
             },
             {
                 "name": "editban",
-                "description": "Updates the reason a user was banned"
+                "description": "Updates the reason a user was banned",
+                "options": [
+                    {
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @ or 18-digit ID of a user",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the edit",
+                        "required": true,
+                        "maxLength": 512
+                    }
+                ]
             },
             {
                 "name": "tempban",
-                "description": "Sets a ban which expires automatically"
+                "description": "Sets a ban which expires automatically",
+                "options": [
+                    {
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @ or 18-digit ID of a user",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the temporary ban",
+                        "required": true,
+                        "maxLength": 512
+                    },
+                    {
+                        "type": 4,
+                        "name": "length",
+                        "description": "How many days the user should remain banned",
+                        "required": true,
+                        "choices": [
+                            {
+                                "name": "1 week",
+                                "value": 7
+                            },
+                            {
+                                "name": "1 month",
+                                "value": 30
+                            },
+                            {
+                                "name": "3 months",
+                                "value": 91
+                            },
+                            {
+                                "name": "6 months",
+                                "value": 182
+                            },
+                            {
+                                "name": "1 year",
+                                "value": 365
+                            }
+                        ],
+                        "minValue": 7,
+                        "maxValue": 365
+                    }
+                ]
             },
             {
                 "name": "softban",
-                "description": "Bans then unbans a user; purges messages"
+                "description": "Bans then unbans a user; purges their messages",
+                "options": [
+                    {
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @ or 18-digit ID of a user",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the soft ban",
+                        "required": false,
+                        "maxLength": 512
+                    }
+                ]
             },
             {
                 "name": "masskick",
-                "description": "Kicks up to five users at once"
+                "description": "Kicks up to five users at once",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "targets",
+                        "description": "A list of users by @ or 18-digit IDs",
+                        "required": true
+                    },
+                    {
+                        "type": 3,
+                        "name": "reason",
+                        "description": "Explanation for the kick (applies to all users in the log)",
+                        "required": true,
+                        "maxLength": 512
+                    }
+                ]
             }
         ]
     },
+
     {
         "name": "emoji",
         "description": "Commands to update and track emojis",
@@ -67,72 +217,178 @@
             }
         ]
     },
+
     {
         "name": "text",
-        "description": "Commands which modify the look and language of some text",
-        "subcommands":[
+        "description": "Commands which change the appearance or language of some text",
+        "subcommands": [
             {
                 "name": "jarjar",
-                "description":"Meesa translate da message into Gungan, bombad"
+                "description": "Meesa translate da message into Gungan, bombad",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "text",
+                        "description": "The text you want to do stuff with",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 1250
+                    }
+                ]
             },
             {
-                "name": "zoomify",
-                "description":"Makes ur msg bussin fr no cap"
+                "name": "zoomer",
+                "description":"Makes ur msg bussin fr no cap",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "text",
+                        "description": "The text you want to do stuff with",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 1250
+                    }
+                ]
             },
             {
                 "name": "translate",
-                "description": "Translate your message into another language"
+                "description": "Tries to translate your message from one language to another",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "text",
+                        "description": "The text you want to do stuff with",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 1250
+                    },
+                    {
+                        "type": 3,
+                        "name": "language",
+                        "description": "What language to output",
+                        "required": true,
+                        "autocomplete": true
+                    }
+                ]
             },
             {
                 "name": "emojify",
-                "description":"Decorate your message with emojis"
+                "description": "Decorates a message with some emojis",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "text",
+                        "description": "The text you want to do stuff with",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 1250
+                    }
+                ]
             },
             {
                 "name": "clap",
-                "description":"Add claps to your message"
+                "description": "Adds some sassy claps to a message",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "text",
+                        "description": "The text you want to do stuff with",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 1250
+                    }
+                ]
             },
             {
-                "name": "style",
-                "description":"Changes the look of your message"
+                "name": "aesthetic",
+                "description": "𝓒𝓱𝓪𝓷𝓰𝓮𝓼 𝕥𝕙𝕖 卂卩卩乇卂尺卂几匚乇 Ø₣ ₳ ๓ēŞŞคງe",
+                "options": [
+                    {
+                        "type": 3,
+                        "name": "text",
+                        "description": "The text you want to do stuff with",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 1250
+                    },
+                    {
+                        "type": 3,
+                        "name": "style",
+                        "description": "Select an option from the list",
+                        "required": true,
+                        "choices": []
+                    }
+                ]
             }
         ]
     },
+    
     {
         "name": "clear",
         "description": "Commands to tidy up the server and users",
         "subcommands": [
             {
                 "name": "timeouts",
-                "description": "Cancels all of the active timeouts"
+                "description": "Cancels all of the active timeouts",
+                "options": []
             },
             {
                 "name": "nicknames",
-                "description": "Clears all nicknames from server members"
+                "description": "Clears all nicknames from server members",
+                "options": []
             },
             {
                 "name": "bans",
-                "description": "Empties the ban list"
+                "description": "Empties the ban list",
+                "options": []
             },
             {
                 "name": "role",
-                "description": "Removes the selected role from all members"
+                "description": "Removes a specified role from any users who have it",
+                "options": [
+                    {
+                        "type": 8,
+                        "name": "role",
+                        "description": "The role to remove from all members",
+                        "required": true
+                    }
+                ]
             },
             {
                 "name": "reactions",
-                "description": "Removes reactions from recent posts"
+                "description": "Removes reactions from recent posts",
+                "options": []
             },
             {
                 "name": "bot",
-                "description": "Cleans up messages posted by the bot"
+                "description": "Cleans up messages posted by the bot",
+                "options": []
             },
             {
                 "name": "user",
-                "description": "Deletes recent messages from a specified user"
-
+                "description": "Deletes recent messages from a specified user",
+                "options": [
+                    {
+                        "type": 6,
+                        "name": "target",
+                        "description": "The @mention or 18-digit ID of a user",
+                        "required": true
+                    }
+                ]
             },
             {
                 "name": "all",
-                "description": "Deletes a specified number of messages (default 5)"
+                "description": "Deletes a number of messages (default 5) from all users",
+                "options": [
+                    {
+                        "type": 4,
+                        "name": "amount",
+                        "description": "The number of messages to delete",
+                        "maxValue": 50,
+                        "minValue": 1,
+                        "required": false
+                    }
+                ]
             }
         ]
     }

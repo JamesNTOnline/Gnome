@@ -12,9 +12,9 @@ let displayEmoji = new SubOptionBuilder('display')
     .getSubCmd();
 let addEmoji = new SubOptionBuilder('add')
     .getSubCmd();
-let del_emoji = new SubOptionBuilder('delete')
+let delEmoji = new SubOptionBuilder('delete')
     .getSubCmd();
-let react_score = new SubOptionBuilder('score')
+let reactScore = new SubOptionBuilder('score') //shoulg go into info?
     .getSubCmd();
 
 
@@ -36,12 +36,12 @@ module.exports = { //exports data in Node.js so it can be require()d in other fi
                 option.setName('name')
                     .setDescription('tag for the new emoji')
                     .setRequired(true)))
-        .addSubcommand(del_emoji
+        .addSubcommand(delEmoji
             .addStringOption(option =>
                 option.setName('emoji')
                     .setDescription('the emoji to be deleted from this server')
                     .setRequired(true)))
-        .addSubcommand(react_score
+        .addSubcommand(reactScore
             .addUserOption(option =>
                 option.setName('user')
                     .setDescription('who to check the reaction score for')
