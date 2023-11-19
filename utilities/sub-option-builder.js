@@ -8,6 +8,71 @@ const commandRegistry = require('../command-registry.js');
  * tl;dr: @todo change how command setup works
  */
 
+
+function buildSubcommandFromJson(subcommandData) {
+    const subcommandBuilder = new SlashCommandSubcommandBuilder()
+        .setName(subcommandData.name)
+        .setDescription(subcommandData.description);
+    if (subcommandData.options) {
+        subcommandData.options.forEach((option) => {
+            switch (option.type) {
+                case 'TEXT':
+                    subcommandBuilder.addStringOption((opt) =>
+                        opt.setName(option.name)
+                            .setDescription(option.description)
+                            .setRequired(option.required || false)
+                            .setMinLength(option.minLength || 1)
+                            .setMaxLength(option.maxLength || 2000)
+                    );
+                    if (option.autocomplete) {
+                        subcommandBuilder.setAutocomplete(option.autocomplete);
+                    }
+                
+                    if (option.choices && option.choices.length > 0) {
+                        // Example: If choices are provided, add them to the option
+                        subcommandBuilder.addChoices(option.choices);
+                    }
+                    break;
+                case 'INTEGER': //numerical input
+                    subcommandBuilder.addIntegerOption((opt) =>
+                        opt.setName(option.name)
+                            .setDescription(option.description)
+                            .setRequired(option.required || false)
+                            .setMin(option.minValue)
+                            .setMax(option.maxValue)
+                    );
+
+                    if (option.choices && option.choices.length > 0) { //repeated code
+                        subcommandBuilder.addChoices(option.choices);
+                    }
+                    break;
+                case 5: //boolean
+                    break;
+                case 'USER': //user 
+                    subcommandBuilder.addUserOption((opt) =>
+                        opt.setName(option.name)
+                            .setDescription(option.description)
+                            .setRequired(option.required || false)
+                    );
+                    break;
+                case 'CHANNEL': //channel
+                    break;
+                case 'ROLE': //role
+                    break;
+                case 'MENTION': //mentionable (users, roles)
+                    break;
+                case 'NUM': //number
+                    break;
+                case 'ATTACHMENT': //attachment
+                    break;
+                // Add cases for other option types as needed
+            }
+        });
+    }
+    return subcommandBuilder;
+}
+
+
 /**
  * Use this class and its methods to add options onto a subcommand
  */
