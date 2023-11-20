@@ -15,29 +15,29 @@ function buildSubcommandFromJson(subcommandData) {
         .setDescription(subcommandData.description);
     if (subcommandData.options) {
         subcommandData.options.forEach((option) => {
+            const basicOption = (opt) => //sets up attributes shared by all options
+                opt.setName(option.name)
+                    .setDescription(option.description)
+                    .setRequired(option.required || false);
             switch (option.type) {
                 case 'TEXT':
                     subcommandBuilder.addStringOption((opt) =>
-                        opt.setName(option.name)
-                            .setDescription(option.description)
-                            .setRequired(option.required || false)
+                        basicOption(opt)
                             .setMinLength(option.minLength || 1)
                             .setMaxLength(option.maxLength || 2000)
                     );
                     if (option.autocomplete) {
                         subcommandBuilder.setAutocomplete(option.autocomplete);
                     }
-                
+
                     if (option.choices && option.choices.length > 0) {
                         // Example: If choices are provided, add them to the option
                         subcommandBuilder.addChoices(option.choices);
                     }
                     break;
-                case 'INTEGER': //numerical input
+                case 'INTEGER':
                     subcommandBuilder.addIntegerOption((opt) =>
-                        opt.setName(option.name)
-                            .setDescription(option.description)
-                            .setRequired(option.required || false)
+                        basicOption(opt)
                             .setMin(option.minValue)
                             .setMax(option.maxValue)
                     );
@@ -46,26 +46,30 @@ function buildSubcommandFromJson(subcommandData) {
                         subcommandBuilder.addChoices(option.choices);
                     }
                     break;
-                case 5: //boolean
+                case 'BOOL': //boolean
                     break;
-                case 'USER': //user 
+                case 'USER':
                     subcommandBuilder.addUserOption((opt) =>
-                        opt.setName(option.name)
-                            .setDescription(option.description)
-                            .setRequired(option.required || false)
+                        basicOption(opt)
                     );
                     break;
                 case 'CHANNEL': //channel
                     break;
-                case 'ROLE': //role
+                case 'ROLE':
+                    subcommandBuilder.addRoleOption((opt) =>
+                        basicOption(opt)
+                    );
                     break;
                 case 'MENTION': //mentionable (users, roles)
                     break;
                 case 'NUM': //number
                     break;
-                case 'ATTACHMENT': //attachment
+                case 'ATTACHMENT':
+                    subcommandBuilder.addFileOption((opt) =>
+                        basicOption(opt)
+                    );
                     break;
-                // Add cases for other option types as needed
+    // add cases for other option types discord adds in future
             }
         });
     }
