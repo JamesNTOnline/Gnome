@@ -5,47 +5,29 @@
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const SubOptionBuilder = require('../utilities/sub-option-builder.js');
+const buildSubcommandsFromJson = require('../utilities/sub-command-builder.js');
 
 
-let kick = new SubOptionBuilder('kick')
-    .setupModCommand()
-    .getSubCmd();
-let ban = new SubOptionBuilder('ban')
-    .setupModCommand()
-    .addDeleteOption()
-    .getSubCmd();
-let unban = new SubOptionBuilder('unban')
-    .setupModCommand()
-    .getSubCmd();
-let softban = new SubOptionBuilder('softban')
-    .setupModCommand()
-    .getSubCmd();
-let masskick = new SubOptionBuilder('masskick')
-    .setupModCommand()
-    .getSubCmd();
-let tempban = new SubOptionBuilder('tempban') 
-    .setupModCommand()
-    .getSubCmd();
-let editban = new SubOptionBuilder('editban')
-    .setupModCommand()
-    .getSubCmd();
+// Example usage
+const modSubcommands = buildSubcommandsFromJson('mod');
+
+// Build the root command
+const modCommandBuilder = new SlashCommandBuilder()
+    .setName('mod')
+    .setDescription('Commands to remove unruly users')
+    .setDMPermission(false) // make these commands unavailable in direct messages;
+
+// Add subcommands to the root command
+modSubcommands.forEach(subcommand => {
+    modCommandBuilder.addSubcommand(subcommand);
+});
 
 /*
 exporting a slashcommandbuilder object. 
 this object needs to have a name and description (required by command.toJSON)
 */
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('mod')
-        .setDescription('Commands to remove unruly users')
-        .setDMPermission(false) //make these commands unavailable in direct messages
-        .addSubcommand(kick) //start adding subcommands to the root command
-        .addSubcommand(masskick)
-        .addSubcommand(ban) //bans
-        .addSubcommand(tempban)
-        .addSubcommand(softban)
-        .addSubcommand(unban) //updating bans
-        .addSubcommand(editban),
+    data: modCommandBuilder,
 
     /*Each subcommand requires a different resolution for their options
     interaction.options methods return different things about what happened in the command (i.e. target)*/

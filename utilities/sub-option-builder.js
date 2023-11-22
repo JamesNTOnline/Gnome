@@ -9,73 +9,6 @@ const commandRegistry = require('../command-registry.js');
  */
 
 
-function buildSubcommandFromJson(subcommandData) {
-    const subcommandBuilder = new SlashCommandSubcommandBuilder()
-        .setName(subcommandData.name)
-        .setDescription(subcommandData.description);
-    if (subcommandData.options) {
-        subcommandData.options.forEach((option) => {
-            const basicOption = (opt) => //sets up attributes shared by all options
-                opt.setName(option.name)
-                    .setDescription(option.description)
-                    .setRequired(option.required || false);
-            switch (option.type) {
-                case 'TEXT':
-                    subcommandBuilder.addStringOption((opt) =>
-                        basicOption(opt)
-                            .setMinLength(option.minLength || 1)
-                            .setMaxLength(option.maxLength || 2000)
-                    );
-                    if (option.autocomplete) {
-                        subcommandBuilder.setAutocomplete(option.autocomplete);
-                    }
-
-                    if (option.choices && option.choices.length > 0) {
-                        // Example: If choices are provided, add them to the option
-                        subcommandBuilder.addChoices(option.choices);
-                    }
-                    break;
-                case 'INTEGER':
-                    subcommandBuilder.addIntegerOption((opt) =>
-                        basicOption(opt)
-                            .setMin(option.minValue)
-                            .setMax(option.maxValue)
-                    );
-
-                    if (option.choices && option.choices.length > 0) { //repeated code
-                        subcommandBuilder.addChoices(option.choices);
-                    }
-                    break;
-                case 'BOOL': //boolean
-                    break;
-                case 'USER':
-                    subcommandBuilder.addUserOption((opt) =>
-                        basicOption(opt)
-                    );
-                    break;
-                case 'CHANNEL': //channel
-                    break;
-                case 'ROLE':
-                    subcommandBuilder.addRoleOption((opt) =>
-                        basicOption(opt)
-                    );
-                    break;
-                case 'MENTION': //mentionable (users, roles)
-                    break;
-                case 'NUM': //number
-                    break;
-                case 'ATTACHMENT':
-                    subcommandBuilder.addFileOption((opt) =>
-                        basicOption(opt)
-                    );
-                    break;
-    // add cases for other option types discord adds in future
-            }
-        });
-    }
-    return subcommandBuilder;
-}
-
 
 /**
  * Use this class and its methods to add options onto a subcommand
@@ -225,4 +158,4 @@ class SubOptionBuilder {
 
 }
 
-module.exports = SubOptionBuilder;
+module.exports = SubOptionBuilder
