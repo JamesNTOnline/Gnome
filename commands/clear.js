@@ -7,45 +7,61 @@
  */
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const SubOptionBuilder = require('../utilities/sub-option-builder.js');
+const buildSubcommandsFromJson = require('../utilities/sub-command-builder.js');
 
 
-// these commands modify groups of users
-let timeouts = new SubOptionBuilder('timeouts').getSubCmd();
-let nicknames = new SubOptionBuilder('nicknames').getSubCmd();
-let bans = new SubOptionBuilder('bans').getSubCmd();
-let role = new SubOptionBuilder('role').getSubCmd()
-    .addRoleOption(option =>
-        option.setName('role')
-            .setDescription('The role to remove from all members')
-            .setRequired(true));
+// Example usage
+const clearSubcommands = buildSubcommandsFromJson('clear');
+// Build the root command
+const clearCommandBuilder = new SlashCommandBuilder()
+    .setName('clear')
+    .setDescription('Commands which can tidy up a server quickly')
+    .setDMPermission(false) // make these commands unavailable in direct messages;
 
-// these commands modify messages
-let reactions = new SubOptionBuilder('reactions').getSubCmd();
-let bot = new SubOptionBuilder('bot').getSubCmd();
-let purge = new SubOptionBuilder('user')
-    .addTargetUserOption()
-    .getSubCmd();
-let all = new SubOptionBuilder('all').getSubCmd()
-    .addNumberOption(option =>
-        option.setName('amount')
-            .setDescription('The number of messages to delete')
-            .setMaxValue(50)
-            .setMinValue(1)
-            .setRequired(false));
+// Add subcommands to the root command
+clearSubcommands.forEach(subcommand => {
+    clearCommandBuilder.addSubcommand(subcommand);
+});
+
+
+// // these commands modify groups of users
+// let timeouts = new SubOptionBuilder('timeouts').getSubCmd();
+// let nicknames = new SubOptionBuilder('nicknames').getSubCmd();
+// let bans = new SubOptionBuilder('bans').getSubCmd();
+// let role = new SubOptionBuilder('role').getSubCmd()
+//     .addRoleOption(option =>
+//         option.setName('role')
+//             .setDescription('The role to remove from all members')
+//             .setRequired(true));
+
+// // these commands modify messages
+// let reactions = new SubOptionBuilder('reactions').getSubCmd();
+// let bot = new SubOptionBuilder('bot').getSubCmd();
+// let purge = new SubOptionBuilder('user')
+//     .addTargetUserOption()
+//     .getSubCmd();
+// let all = new SubOptionBuilder('all').getSubCmd()
+//     .addNumberOption(option =>
+//         option.setName('amount')
+//             .setDescription('The number of messages to delete')
+//             .setMaxValue(50)
+//             .setMinValue(1)
+//             .setRequired(false));
 
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('clear')
-        .setDescription('Commands which can tidy up a server quickly')
-        .addSubcommand(timeouts) // undo all of the active timeouts
-        .addSubcommand(nicknames) // undo all of the active nicknames
-        .addSubcommand(bans) // undo all of the active bans
-        .addSubcommand(role) // remove a specified role from every member who has it currently
-        .addSubcommand(reactions) // remove all reactions from recent posts
-        .addSubcommand(bot) // remove messages left by the bot itself
-        .addSubcommand(purge) // remove recent messages sent by a particular user
-        .addSubcommand(all), // remove recent messages from all users
+    data: clearCommandBuilder,
+    // data: new SlashCommandBuilder()
+    //     .setName('clear')
+    //     .setDescription('Commands which can tidy up a server quickly')
+    //     .addSubcommand(timeouts) // undo all of the active timeouts
+    //     .addSubcommand(nicknames) // undo all of the active nicknames
+    //     .addSubcommand(bans) // undo all of the active bans
+    //     .addSubcommand(role) // remove a specified role from every member who has it currently
+    //     .addSubcommand(reactions) // remove all reactions from recent posts
+    //     .addSubcommand(bot) // remove messages left by the bot itself
+    //     .addSubcommand(purge) // remove recent messages sent by a particular user
+    //     .addSubcommand(all), // remove recent messages from all users
 
     async execute(interaction) {
         const cmdName = interaction.options.getSubcommand();
