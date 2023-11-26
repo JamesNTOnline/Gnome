@@ -7,21 +7,21 @@
  */
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
 const SubOptionBuilder = require('../utilities/sub-option-builder.js');
-const buildSubcommandsFromJson = require('../utilities/sub-command-builder.js');
+const allCommands = require('../utilities/sub-command-builder.js');
 
 
 // Example usage
-const clearSubcommands = buildSubcommandsFromJson('clear');
-// Build the root command
-const clearCommandBuilder = new SlashCommandBuilder()
-    .setName('clear')
-    .setDescription('Commands which can tidy up a server quickly')
-    .setDMPermission(false) // make these commands unavailable in direct messages;
+// const clearSubcommands = buildSubcommandsFromJson('clear');
+// // Build the root command
+// const clearCommandBuilder = new SlashCommandBuilder()
+//     .setName('clear')
+//     .setDescription('Commands which can tidy up a server quickly')
+//     .setDMPermission(false) // make these commands unavailable in direct messages;
 
-// Add subcommands to the root command
-clearSubcommands.forEach(subcommand => {
-    clearCommandBuilder.addSubcommand(subcommand);
-});
+// // Add subcommands to the root command
+// clearSubcommands.forEach(subcommand => {
+//     clearCommandBuilder.addSubcommand(subcommand);
+// });
 
 
 // // these commands modify groups of users
@@ -50,7 +50,7 @@ clearSubcommands.forEach(subcommand => {
 
 
 module.exports = {
-    data: clearCommandBuilder,
+    data: allCommands['clear'].rootCommand,
     // data: new SlashCommandBuilder()
     //     .setName('clear')
     //     .setDescription('Commands which can tidy up a server quickly')

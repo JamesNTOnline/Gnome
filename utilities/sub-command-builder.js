@@ -1,8 +1,15 @@
 const fs =  require('fs'); //filesystem module
-const { SlashCommandSubcommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.js");
 
 
-// TODO: build a dictionary of all the commands at once as category: subcommands
+/**
+ * The code in this file is 'pointless':
+ * It is possible to simply define all of the attributes of a command and change deploy-commands.js
+ * to use the JSON directly instead of using discord.js' builders which then get converted to JSON.
+ * So, you can put() JSON. I am doing JSON -> some adjustments using the builders -> put(toJSON).
+ * Mostly, this is just an exercise in playing around with the JSON structure to do *stuff* with it,
+ * purely for practice, but essentially the code is unnecessary!
+ */
 
 
 /**
@@ -11,11 +18,14 @@ const { SlashCommandSubcommandBuilder } = require("discord.js");
  * @returns {Array} - An array of subcommand builders
  * @throws {Error} - Error if the named category does not exist in the JSON
  */
-function buildSubcommandsFromJson(categoryName) {
+function buildCommandsFromJson() {
     const commandsJson = fs.readFileSync('commands.json', 'utf-8'); //get the command definitions
     const commandsData = JSON.parse(commandsJson);
-    const category = commandsData.find(cat => cat.name === categoryName);
-    if (category) {
+    const commands = {};
+
+    commandsData.forEach(category => {
+        // const category = commandsData.find(cat => cat.name === categoryName);
+        // if (category) {
         const subcommands = category.subcommands.map(subcommand => {
             //set up the subcommand
             const subcommandBuilder = new SlashCommandSubcommandBuilder()
@@ -50,7 +60,7 @@ function buildSubcommandsFromJson(categoryName) {
                         case 'NUM': //number
                             break;
                         case 'ATTACHMENT':
-                            subcommandBuilder.addFileOption((opt) =>
+                            subcommandBuilder.addAttachmentOption((opt) =>
                                 buildSimpleOption(opt, option)
                             );
                             break;
@@ -60,15 +70,51 @@ function buildSubcommandsFromJson(categoryName) {
             }
             return subcommandBuilder;
         });
-        return subcommands;
-    }
-    throw new Error(`Category ${categoryName} not found in JSON`);
+        // set up the root command
+        const { rootCommand, subcommands: subcommandBuilders } = buildCommand(category, subcommands);
+        // store both the root command builder and subcommand builders in the data structure
+        commands[category.name] = {
+            rootCommand: rootCommand,
+            subcommands: subcommandBuilders,
+        };
+    });
+
+    return commands;
 }
 
 
+//         return subcommands;
+//     }
+//     throw new Error(`Category ${categoryName} not found in JSON`);
+// }
+
 
 /**
- * Sets up the basic information for any option type
+ * Builds a root command and appends the subcommands
+ * @param {Object} category - The category data from the JSON
+ * @param {Array} subcommands - An array of subcommand builders
+ * @returns {Object} - An object containing both the root command builder and subcommand builders
+ */
+function buildCommand(category, subcommands) {
+    // set up the root command
+    const rootCommandBuilder = new SlashCommandBuilder()
+        .setName(category.name)
+        .setDescription(category.description)
+        .setDMPermission(category.dm || false); // make these commands unavailable in direct messages;
+
+    // add subcommands to the root command
+    subcommands.forEach(subcommand => {
+        rootCommandBuilder.addSubcommand(subcommand);
+    });
+
+    return {
+        rootCommand: rootCommandBuilder,
+        subcommands: subcommands,
+    };
+}
+
+/**
+ * Sets up the basic information for any option type, that all options must have
  * @param {object} opt - A discord option object to be setup
  * @param {object} option - A representation of an option, containing all of the data to be inserted
  * @returns {object} - A configured discord option
@@ -116,5 +162,5 @@ function buildIntegerOption(subcommandBuilder, option) {
     });
 }
 
-
-module.exports = buildSubcommandsFromJson;
+const allCommands = buildCommandsFromJson();
+module.exports = allCommands;

@@ -5,29 +5,29 @@
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const SubOptionBuilder = require('../utilities/sub-option-builder.js');
-const buildSubcommandsFromJson = require('../utilities/sub-command-builder.js');
+const allCommands = require('../utilities/sub-command-builder.js');
 
 
 // Example usage
-const modSubcommands = buildSubcommandsFromJson('mod');
+// const modSubcommands = buildSubcommandsFromJson('mod');
 
-// Build the root command
-const modCommandBuilder = new SlashCommandBuilder()
-    .setName('mod')
-    .setDescription('Commands to remove unruly users')
-    .setDMPermission(false) // make these commands unavailable in direct messages;
+// // Build the root command
+// const modCommandBuilder = new SlashCommandBuilder()
+//     .setName('mod')
+//     .setDescription('Commands to remove unruly users')
+//     .setDMPermission(false) // make these commands unavailable in direct messages;
 
-// Add subcommands to the root command
-modSubcommands.forEach(subcommand => {
-    modCommandBuilder.addSubcommand(subcommand);
-});
+// // Add subcommands to the root command
+// modSubcommands.forEach(subcommand => {
+//     modCommandBuilder.addSubcommand(subcommand);
+// });
 
 /*
 exporting a slashcommandbuilder object. 
 this object needs to have a name and description (required by command.toJSON)
 */
 module.exports = {
-    data: modCommandBuilder,
+    data: allCommands['mod'].rootCommand,
 
     /*Each subcommand requires a different resolution for their options
     interaction.options methods return different things about what happened in the command (i.e. target)*/
