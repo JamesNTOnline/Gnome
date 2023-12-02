@@ -9,8 +9,6 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField,
 const allCommands = require('../utilities/sub-command-builder.js');
 
 
-
-
 module.exports = { //exports data in Node.js so it can be require()d in other files
     data: allCommands['emoji'].rootCommand,
 
