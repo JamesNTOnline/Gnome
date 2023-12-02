@@ -2,10 +2,12 @@
     {
         "name": "mod",
         "description": "Commands to remove bad users",
+        "ctype": 1,
         "subcommands": [
             {
                 "name": "kick",
                 "description": "Kicks a user; they can rejoin using an invite link",
+                "ctype": 1, 
                 "options": [
                     {
                         "type": "USER",
@@ -17,6 +19,7 @@
                         "type": "TEXT",
                         "name": "reason",
                         "description": "Explanation for the kick",
+                        "ctype": 3,
                         "required": false,
                         "maxLength": 512
                     }

@@ -7,160 +7,6 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField,
 const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const allCommands = require('../utilities/sub-command-builder.js');
 
-
-// Example usage
-// const modSubcommands = buildSubcommandsFromJson('mod');
-
-// // Build the root command
-// const modCommandBuilder = new SlashCommandBuilder()
-//     .setName('mod')
-//     .setDescription('Commands to remove unruly users')
-//     .setDMPermission(false) // make these commands unavailable in direct messages;
-
-// // Add subcommands to the root command
-// modSubcommands.forEach(subcommand => {
-//     modCommandBuilder.addSubcommand(subcommand);
-// });
-
-/*
-exporting a slashcommandbuilder object. 
-this object needs to have a name and description (required by command.toJSON)
-*/
-module.exports = {
-    data: allCommands['mod'].rootCommand,
-
-    /*Each subcommand requires a different resolution for their options
-    interaction.options methods return different things about what happened in the command (i.e. target)*/
-    async execute(interaction) {
-        const cmdName = interaction.options.getSubcommand();
-        const reason = interaction.options.getString('reason') ?? 'No reason provided.';
-        const target = interaction.options.getUser('target') ?? filterTargets(interaction.options.getString('targets')); //the target(s) for the action member ?? string
-        const deletePeriod = interaction.options.getInteger('delete') ?? 0;
-        let success = false;
-        if (!target) { //no target, don't do anything (should not happen anyway)
-            console.log('mod command attempted without target');
-            interaction.reply('Target could not be found, did you enter it correctly?');
-            return;
-        }
-
-        if (checkPermissions(interaction, cmdName, target)) {
-            switch (cmdName) { // processing the options
-                /**
-                 * Kicking can fail if a user leaves the server before the command is sent so check the ID is valid up front
-                 */
-                case 'kick':
-                    if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch
-                        console.log(`kick attempted on invalid ID: ${target.id}`);
-                        interaction.reply('Invalid ID - user may not be in this server');
-                        break;
-                    }
-                    //tell the member what happened (wont be received if bot is blocked. no way around this!)
-                    await target.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
-                    await interaction.guild.members.kick(target, reason)
-                        .then(() => {
-                            interaction.reply(`**Kicked:** <@${target.id}>`);
-                        })
-                        .catch(err => {
-                            handleError(interaction, target, err);
-                        });
-                    break;
-                /**
-                 * Masskick is intended to allow removing multiple users in a single stroke
-                 * Discord's API rate limits requests, so the command must respond and then updates its response afterwards
-                 * Command can tolerate partial faultiness, so feedback to the caller what was un/successful!
-                 * @todo
-                 */
-                case 'masskick':
-                    await interaction.reply('Trying to kick members...');
-                    let response = `**Kicked: **`;
-                    let invalid = `\n**Invalid: **`;
-                    let invalidCount = 0;
-                    try {
-                        const promises = target.map(async (id) => {
-                            const member = interaction.guild.members.cache.get(id);
-                            if (member && member.manageable) { //member retrieved, send a message and try to kick them
-                                await member.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
-                                await interaction.guild.members.kick(member, reason);
-                                response += `<@${id}> `; 
-                            } else {
-                                invalid += `${id}, `;
-                                invalidCount++;
-                            }
-                        });
-                        await Promise.all(promises); //wait for all of the promises to resolve
-                        if (invalidCount > 0) {
-                            invalid = invalid.slice(0, -2); // Removes the last comma and space
-                            response += invalid;
-                        }
-                        await interaction.editReply(response);
-                    } catch (err) {
-                        handleError(interaction, target, err);
-                    }
-                    break;
-                /**
-                 * Ban blocks the user from rejoining (and deletes some of their last posts) until reversed
-                 * @todo implement tempban
-                 * @todo testing for softban
-                 */
-                case 'ban':
-                    success = tryBanUser(interaction, target, cmdName, reason, deletePeriod);
-                    break;
-                /**
-                 * Tempban serves as a medium between a ban and a kick - a ban which will reverse itself after time
-                 * @todo implement database that can store these temp bans
-                 */
-                case 'tempban': //Tar, Dur: Hist, Reason
-                    await interaction.reply({content: '[NYI]', ephemeral:true});
-                    //ban the target
-                    //update a database of temp-banned users
-                    break;
-                /**
-                 * Softban is a ban followed by an immediate reversal, which serves to quickly purge messages
-                 */
-                case 'softban':
-                    try {
-                        success = tryBanUser(interaction, target, cmdName, reason, 86400);
-                        if (success) {
-                            await interaction.guild.members.unban(target);
-                        }
-                    } catch (err) {
-                        interaction.followUp({ content: `Something went wrong; user may still be banned`, ephemeral: true });
-                        console.error(err);
-                    }
-                    break;
-                /**
-                 * Reverses a ban for a specific user
-                 */
-                case 'unban':
-                    try {
-                        await interaction.guild.bans.fetch(target);
-                        await interaction.guild.members.unban(target);
-                        interaction.reply(`Unbanned ${target}: ${reason}`);
-                    } catch (err) {
-                            handleError(interaction, target, err);
-                    }
-                    break;
-                      
-                /**
-                 * Removes a user's ban and bans them with a new reason
-                 * @todo
-                 */
-                case 'editban':
-                    try {
-                        await interaction.guild.bans.fetch(target);
-                        await interaction.guild.members.unban(target);
-                        await interaction.guild.members.ban(target, { reason: reason });
-                        interaction.reply(`Updated ${target} ban reason: ${reason}`);
-                    } catch (err) {
-                            handleError(interaction, target, err);
-                    }
-                    break;
-            }
-        }
-    },
-};
-
-
 /**
  * Removes any non-numerical characters (e.g. formatting, spaces) from a string of userIDs
  * @param {string} targetString A string object of space-separated IDs to be processed
@@ -312,3 +158,142 @@ function handleError(interaction, target, err) {
     console.error(err);
     }
 }
+
+
+
+module.exports = {
+    data: allCommands['mod'].rootCommand,
+
+    /*Each subcommand requires a different resolution for their options
+    interaction.options methods return different things about what happened in the command (i.e. target)*/
+    async execute(interaction) {
+        const cmdName = interaction.options.getSubcommand();
+        const reason = interaction.options.getString('reason') ?? 'No reason provided.';
+        const target = interaction.options.getUser('target') ?? filterTargets(interaction.options.getString('targets')); //the target(s) for the action member ?? string
+        const deletePeriod = interaction.options.getInteger('delete') ?? 0;
+        let success = false;
+        if (!target) { //no target, don't do anything (should not happen anyway)
+            console.log('mod command attempted without target');
+            interaction.reply('Target could not be found, did you enter it correctly?');
+            return;
+        }
+
+        if (checkPermissions(interaction, cmdName, target)) {
+            switch (cmdName) { // processing the options
+                /**
+                 * Kicking can fail if a user leaves the server before the command is sent so check the ID is valid up front
+                 */
+                case 'kick':
+                    if (!interaction.guild.members.cache.get(target.id)) { //move this - can also use fetch
+                        console.log(`kick attempted on invalid ID: ${target.id}`);
+                        interaction.reply('Invalid ID - user may not be in this server');
+                        break;
+                    }
+                    //tell the member what happened (wont be received if bot is blocked. no way around this!)
+                    await target.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
+                    await interaction.guild.members.kick(target, reason)
+                        .then(() => {
+                            interaction.reply(`**Kicked:** <@${target.id}>`);
+                        })
+                        .catch(err => {
+                            handleError(interaction, target, err);
+                        });
+                    break;
+                /**
+                 * Masskick is intended to allow removing multiple users in a single stroke
+                 * Discord's API rate limits requests, so the command must respond and then updates its response afterwards
+                 * Command can tolerate partial faultiness, so feedback to the caller what was un/successful!
+                 * @todo
+                 */
+                case 'masskick':
+                    await interaction.reply('Trying to kick members...');
+                    let response = `**Kicked: **`;
+                    let invalid = `\n**Invalid: **`;
+                    let invalidCount = 0;
+                    try {
+                        const promises = target.map(async (id) => {
+                            const member = interaction.guild.members.cache.get(id);
+                            if (member && member.manageable) { //member retrieved, send a message and try to kick them
+                                await member.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
+                                await interaction.guild.members.kick(member, reason);
+                                response += `<@${id}> `; 
+                            } else {
+                                invalid += `${id}, `;
+                                invalidCount++;
+                            }
+                        });
+                        await Promise.all(promises); //wait for all of the promises to resolve
+                        if (invalidCount > 0) {
+                            invalid = invalid.slice(0, -2); // Removes the last comma and space
+                            response += invalid;
+                        }
+                        await interaction.editReply(response);
+                    } catch (err) {
+                        handleError(interaction, target, err);
+                    }
+                    break;
+                /**
+                 * Ban blocks the user from rejoining (and deletes some of their last posts) until reversed
+                 * @todo implement tempban
+                 * @todo testing for softban
+                 */
+                case 'ban':
+                    success = tryBanUser(interaction, target, cmdName, reason, deletePeriod);
+                    break;
+                /**
+                 * Tempban serves as a medium between a ban and a kick - a ban which will reverse itself after time
+                 * @todo implement database that can store these temp bans
+                 */
+                case 'tempban': //Tar, Dur: Hist, Reason
+                    await interaction.reply({content: '[NYI]', ephemeral:true});
+                    //ban the target
+                    //update a database of temp-banned users
+                    break;
+                /**
+                 * Softban is a ban followed by an immediate reversal, which serves to quickly purge messages
+                 */
+                case 'softban':
+                    try {
+                        success = tryBanUser(interaction, target, cmdName, reason, 86400);
+                        if (success) {
+                            await interaction.guild.members.unban(target);
+                        }
+                    } catch (err) {
+                        interaction.followUp({ content: `Something went wrong; user may still be banned`, ephemeral: true });
+                        console.error(err);
+                    }
+                    break;
+                /**
+                 * Reverses a ban for a specific user
+                 */
+                case 'unban':
+                    try {
+                        await interaction.guild.bans.fetch(target);
+                        await interaction.guild.members.unban(target);
+                        interaction.reply(`Unbanned ${target}: ${reason}`);
+                    } catch (err) {
+                            handleError(interaction, target, err);
+                    }
+                    break;
+                      
+                /**
+                 * Removes a user's ban and bans them with a new reason
+                 * @todo
+                 */
+                case 'editban':
+                    try {
+                        await interaction.guild.bans.fetch(target);
+                        await interaction.guild.members.unban(target);
+                        await interaction.guild.members.ban(target, { reason: reason });
+                        interaction.reply(`Updated ${target} ban reason: ${reason}`);
+                    } catch (err) {
+                            handleError(interaction, target, err);
+                    }
+                    break;
+            }
+        }
+    },
+};
+
+
+

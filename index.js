@@ -1,72 +1,96 @@
-
-//best practice? use const. change to let or var if needed
-const fs = require('fs'); //filesystem module
-const path = require('path'); //path module
+const fs = require('fs'); 
+const path = require('path'); 
 const { Client, Events, Collection, GatewayIntentBits } = require('discord.js');
-const cron = require('node-cron');
-const { token } = require('./botconfig.json');
-
-// create a new client instance
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds, //baseline
-        GatewayIntentBits.GuildMessages, //required to receive messages
-        GatewayIntentBits.MessageContent, //to receive content of messages
-        GatewayIntentBits.GuildMembers, //to receive member information (e.g. for greetings)
-    ],
-});
+const cron = require('node-cron'); //task automation module
+const { token } = require('./botconfig.json'); //keep token safe & private
 
 
-/*
-get the path to the commands folder
-read the path and return the .js files as an array ['ban.js', 'echo.js'...]
-can then build the client's command list which can be used by other files
-*/
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-//const commandFiles = getFileList(commandsPath).filter(file=>file.endsWith('.js')); alternative way, see below
-client.commands = new Collection(); //extends Map - O(1) TC
-//loop over the file array and get the path to the commands
-for (const file of commandFiles) {
-    const fp = path.join(commandsPath, file);
-    const command = require(fp);
-    //K:V pair name:exported module
-    if ('data' in command && 'execute' in command) { //checking the command does something
-        client.commands.set(command.data.name, command); //add to the array
-    } else {
-        console.log(`WARNING: Command at ${fp} is missing data or execute properties`);
+/**
+ * Applies a handling function to each file in a provided folder
+ * @param {object} client - The Discord client object
+ * @param {string} folder - The name of the folder containing the files
+ * @param {function} fileHandler - A processing function to apply to each file.
+ */
+function processFiles(client, folder, fileHandler) {
+    try {
+        const folderPath = path.join(__dirname, folder);
+        const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
+
+        for (const file of files) {
+            const filePath = path.join(folderPath, file);
+            const fileContent = require(filePath); //require works conditionally with .js files
+            fileHandler(client, fileContent, filePath); 
+        }
+    } catch (error) {
+        console.error(`Error processing files in '${folder}':`, error);
     }
 }
 
 
-/*
-get the path to the event handler folder (events) and get the array of js files
-handle each type of event (for now, there are .once and regular interactions)
-*/
-const eventsPath = path.join(__dirname, 'events');
-const eventsFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-for (const file of eventsFiles) {
-    const fp = path.join(eventsPath, file);
-    const event = require(fp);
-    /*
-    (...args) - variable # of arguments. with slash commands arguments may have
-    different options, or none. collects args into an array
-    the iterable is given to the function and expanded depending on expected arguments
-    */
+/**
+ * Schedules a subcommand to run at a specific time
+ * @param {string} subcommandName - The name of the subcommand to schedule
+ * @param {string} channelID - The ID of the Discord channel where the subcommand should be executed
+ * @param {string} cronExpression - The cron expression specifying when to execute the subcommand.
+ * @param {Array} args - Subcommand-specific arguments to be passed in
+ */
+function scheduleSubcommand(subcommandName, channelID, cronExpression, args) {
+    cron.schedule(cronExpression, () => {
+        executeSubcommand(subcommandName, channelID, args);
+    });
+}
+
+
+/**
+ * Executes a subcommand on a specific Discord channel
+ * @param {string} subcommandName - The name of the subcommand to execute
+ * @param {string} channelID - The ID of the Discord channel where the subcommand should be executed.
+ * @param {Array} args - The arguments to pass to the subcommand when executed.
+ */
+function executeSubcommand(subcommandName, channelID, args) {
+    const channel = client.channels.cache.get(channelID);
+    if (!channel) return console.error(`Channel with ID ${channelID} not found.`);
+    const command = client.commands.get('clear');
+    if (!command || !command.subcommands.has(subcommandName)) {
+        return console.error(`Subcommand "${subcommandName}" not found.`);
+    }
+    try {
+        command.subcommands.get(subcommandName).execute(client, channel, args);
+    } catch (error) {
+        console.error(`Error executing "${subcommandName}":`, error);
+    }
+}
+
+
+//create a new client instance
+const client = new Client({
+    intents: [ //intents are what the bot is able to interact with
+        GatewayIntentBits.Guilds, //baseline to work
+        GatewayIntentBits.GuildMessages, //required to receive messages
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers, //to receive member information (e.g. for greetings)
+    ],
+});
+
+//run through the commands folder and add each command file's command to the client collection
+client.commands = new Collection(); //discord.js extension of Map
+processFiles(client, 'commands', (client, command, filePath) => {
+    if ('data' in command && 'execute' in command) {
+        client.commands.set(command.data.name, command);
+    } else {
+        console.log(`WARNING: Command at ${filePath} is missing data or execute properties`);
+    }
+});
+//as above, but with the events folder
+processFiles(client, 'events', (client, event) => {
     if (event.once) {
         client.once(event.name, (...args) => event.execute(...args));
     } else {
         client.on(event.name, (...args) => event.execute(...args));
     }
-}
-
-//TODO:
-// Have avatar automatically update its avatar for time of year
-// Schedule the subcommand "/clear nicknames" at 12:00 PM (noon) every day
-//scheduleSubcommand('nicknames', '439519603459227661', '29 17 * * *', []);
-
-// log into discord with client token
-client.login(token);
+});
+client.login(token); //finally, log in with the bot token
+console.log(client.commands);
 
 
 /**
@@ -78,45 +102,3 @@ client.login(token);
  * - create a second version of certain commands which don't use interactions at all and can be fired independently & automatically
  */
 
-
-// Function to schedule a subcommand at a specific time
-function scheduleSubcommand(subcommandName, channelID, cronExpression, args) {
-    cron.schedule(cronExpression, () => {
-        executeSubcommand(subcommandName, channelID, args);
-    });
-}
-
-// Function to execute a subcommand
-function executeSubcommand(subcommandName, channelID, args) {
-    const channel = client.channels.cache.get(channelID);
-    if (!channel) return console.error(`Channel with ID ${channelID} not found.`);
-
-    // Check if the subcommand exists in client.commands
-    const command = client.commands.get('clear');
-    if (!command || !command.subcommands.has(subcommandName)) {
-        return console.error(`Subcommand "${subcommandName}" not found.`);
-    }
-
-    // Execute the subcommand using the command module export
-    try {
-        command.subcommands.get(subcommandName).execute(client, channel, args);
-    } catch (error) {
-        console.error(`Error executing "${subcommandName}":`, error);
-    }
-}
-
-//alternative way to organise files - loops through subfolders and adds the file names to a returned array
-/* const getFileList = (dirName) => {
-    let files = [];
-    const items = fs.readdirSync(dirName, { withFileTypes: true });
-
-    for (const item of items) {
-        if (item.isDirectory()) {
-            files = [...files, ...getFileList(`${dirName}/${item.name}`)];
-        } else {
-            files.push(`${item.name}`);
-        }
-    }
-
-    return files;
-}; */

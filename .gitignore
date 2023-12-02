@@ -84,11 +84,15 @@ typings/
 .dynamodb/
 
 # Config files
-deprecated-code.md
-notes.md
 botconfig.json
+
+avatars/
 .env
 node_modules
 Procfile
 **/.vscode/
 **/.vs/
+
+# Notes
+old-code.md
+notes.md
