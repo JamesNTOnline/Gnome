@@ -10,23 +10,20 @@ Global: for publishing the command to all guilds the bot is in
     );
 */
 
-const {REST, Routes} = require('discord.js');
-const {clientId, guildId, token} = require('./botconfig.json');
-const fs = require('node:fs');
-const commandList = [];
-//get command files
-const commandFiles = fs.readdirSync('./commands').filter(file=>file.endsWith('.js'));
+const { REST, Routes } = require('discord.js');
+const { clientId, guildId, token } = require('../botconfig.json');
+const fs = require('fs');
+const path = require('path');
 
-//get SlashCommandBuilder#toJSON() for each command's data
-for(const file of commandFiles){
-    const command = require(`./commands/${file}`);
+const commandList = [];
+const commandsFolderPath = path.join(__dirname, '../commands');
+const commandFiles = fs.readdirSync(commandsFolderPath).filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+    const command = require(path.join(commandsFolderPath, file));
     commandList.push(command.data.toJSON());
 }
-
-
 //prep REST module
 const rest = new REST({version:'10'}).setToken(token);
-
 //deploy
 (async()=>{
     try{

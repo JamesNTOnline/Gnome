@@ -1,4 +1,4 @@
-
+//functions to manipulate data structures here
 
 /**
  * emojilib's structure uses an emoji as the key and lists of words as the values

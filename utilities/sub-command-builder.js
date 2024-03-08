@@ -1,4 +1,4 @@
-const fs =  require('fs'); //filesystem module
+const fs = require('fs'); 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.js");
 
 
@@ -13,8 +13,8 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.
  * For example: a command with 6 subcommands needs 1 commandbuilder and 6 subcommandbuilders.
  * 
  * Here I am writing JSON -> parsing this into the builders with methods here -> sending the builders to JSON again.
- * Mostly, I did this as an exercise in manipulating JSON to do *stuff*, purely for practice, 
- * but essentially meaning most of this code is unnecessary!
+ * Mostly, I did this as an exercise in manipulating JSON to do *stuff* and understanding how discord sees commands
+ * , purely for practice, but essentially meaning most of this code is unnecessary!
  */
 
 

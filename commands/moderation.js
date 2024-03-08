@@ -4,7 +4,6 @@
  */
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
-const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const allCommands = require('../utilities/sub-command-builder.js');
 
 /**

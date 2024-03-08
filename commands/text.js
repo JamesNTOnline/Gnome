@@ -4,7 +4,6 @@
 
 
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField } = require('discord.js');
-const SubOptionBuilder = require('../utilities/sub-option-builder.js');
 const { buildReverseIndex } = require('../utilities/data-manager.js');
 const allCommands = require('../utilities/sub-command-builder.js');
 

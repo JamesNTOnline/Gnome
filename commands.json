@@ -195,13 +195,13 @@
                         "type": "ATTACHMENT",
                         "name": "attachment",
                         "description": "An image file to turn into an emoji",
-                        "required": true
+                        "required": false
                     },
                     {
                         "type": "TEXT",
                         "name": "url",
                         "description": "The URL of the emoji",
-                        "required": true
+                        "required": false
                     }
                 ]
             },
