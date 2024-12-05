@@ -68,7 +68,9 @@ const client = new Client({
         GatewayIntentBits.Guilds, //baseline to work
         GatewayIntentBits.GuildMessages, //required to receive messages
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildBans, //handling bans
         GatewayIntentBits.GuildMembers, //to receive member information (e.g. for greetings)
+        GatewayIntentBits.GuildMessageReactions //to observe reaction events
     ],
 });
 

@@ -3,26 +3,25 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.
 
 
 /** DFN
- * The code in this file is mostly unnecessary and just for practice:
- * It is possible to define all of the attributes of a command and change deploy-commands.js
+ * the code in this file is mostly unnecessary and just for practice:
+ * it is possible to define all of the attributes of a command and change deploy-commands.js
  * to put() the JSON directly instead of using discord.js' builders which then need to be converted to JSON.
  * 
- * The builder classes are ostensibly supposed to be easier to manage by treating commands like objects,
+ * the builder classes are supposed to be easier to manage by treating commands like objects,
  * however, it results in quite a lot of duplicate code; refactoring which, results in additional classes/modules
  * see: sub-option.builder.js, and it quickly becomes a decentralised mess (in my opinion!)
- * For example: a command with 6 subcommands needs 1 commandbuilder and 6 subcommandbuilders.
+ * for example: a command with 6 subcommands needs 1 commandbuilder and 6 subcommandbuilders.
  * 
- * Here I am writing JSON -> parsing this into the builders with methods here -> sending the builders to JSON again.
- * Mostly, I did this as an exercise in manipulating JSON to do *stuff* and understanding how discord sees commands
- * , purely for practice, but essentially meaning most of this code is unnecessary!
+ * here I am writing JSON -> parsing this into the builders with methods here -> sending the builders to JSON again.
+ * mostly, I did this as an exercise in manipulating JSON and understanding how discord sees commands
  */
 
 
 /**
- * Builds full commands from JSON definitions.
- * @returns {Object} - An object containing root commands and subcommands keyed by category name.
- *                    Each entry has a `rootCommand` builder and `subcommands` array of subcommand builders.
- *                    The subcommands can thus be accessed (and modified) individually later if needed.
+ * builds full commands from JSON definitions.
+ * @returns {Object} - an object containing root commands and subcommands keyed by category name.
+ *                    each entry has a `rootCommand` builder and `subcommands` array of subcommand builders.
+ *                    the subcommands can thus be accessed (and modified) individually later if needed.
  */
 function buildCommandsFromJson() {
     const commandsJson = fs.readFileSync('commands.json', 'utf-8'); //get the command definitions
@@ -43,14 +42,14 @@ function buildCommandsFromJson() {
                         case 'INTEGER':
                             buildIntegerOption(subcommandBuilder, option);
                             break;
-                        case 'BOOL': //boolean - unused at present
+                        case 'BOOL': 
                             break;
                         case 'USER':
                             subcommandBuilder.addUserOption((opt) =>
                                 buildSimpleOption(opt, option)
                             );
                             break;
-                        case 'CHANNEL': //channel
+                        case 'CHANNEL': 
                             break;
                         case 'ROLE':
                             subcommandBuilder.addRoleOption((opt) =>
@@ -59,7 +58,7 @@ function buildCommandsFromJson() {
                             break;
                         case 'MENTION': //mentionable (users, roles)
                             break;
-                        case 'NUM': //number
+                        case 'NUM': 
                             break;
                         case 'ATTACHMENT':
                             subcommandBuilder.addAttachmentOption((opt) =>
@@ -92,10 +91,10 @@ function buildCommandsFromJson() {
 
 
 /**
- * Builds a root command and appends the subcommands
- * @param {Object} category - The category data from the JSON
- * @param {Array} subcommands - An array of subcommand builders
- * @returns {Object} - An object containing both the root command builder and subcommand builders
+ * builds a root command and appends the subcommands
+ * @param {Object} category - the category data from the JSON
+ * @param {Array} subcommands - an array of subcommand builders
+ * @returns {Object} - an object containing both the root command builder and subcommand builders
  */
 function buildCommand(category, subcommands) {
     // set up the root command
@@ -116,10 +115,10 @@ function buildCommand(category, subcommands) {
 }
 
 /**
- * Sets up the basic information for any option type, that all options must have
- * @param {object} opt - A discord option object to be setup
- * @param {object} option - A representation of an option, containing all of the data to be inserted
- * @returns {object} - A configured discord option
+ * sets up the basic information for any option type, that all options must have
+ * @param {object} opt - a discord option object to be setup
+ * @param {object} option - a representation of an option, containing all of the data to be inserted
+ * @returns {object} - a configured discord option
  */
 function buildSimpleOption(opt, option) {
     return opt.setName(option.name)
@@ -128,9 +127,9 @@ function buildSimpleOption(opt, option) {
 }
 
 /**
- * Builds a text option onto a subcommandBuilder
- * @param {object} subcommandBuilder - A discord subcommandBuilder which the option will be attached to
- * @param {object} option - A representation of an option, containing all of the data to be inserted
+ * builds a text option onto a subcommandBuilder
+ * @param {object} subcommandBuilder - a discord subcommandBuilder which the option will be attached to
+ * @param {object} option - a representation of an option, containing all of the data to be inserted
  */
 function buildTextOption(subcommandBuilder, option) {
     subcommandBuilder.addStringOption((opt) => {
@@ -148,9 +147,9 @@ function buildTextOption(subcommandBuilder, option) {
 }
 
 /**
- * Builds an integer option onto a subcommandBuilder
- * @param {object} subcommandBuilder - A discord subcommandBuilder which the option will be attached to
- * @param {object} option - A representation of an option, containing all of the data to be inserted
+ * builds an integer option onto a subcommandBuilder
+ * @param {object} subcommandBuilder - a discord subcommandBuilder which the option will be attached to
+ * @param {object} option - a representation of an option, containing all of the data to be inserted
  */
 function buildIntegerOption(subcommandBuilder, option) {
     subcommandBuilder.addIntegerOption((opt) => {

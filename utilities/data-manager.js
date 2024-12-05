@@ -1,10 +1,10 @@
-//functions to manipulate data structures here
+//Functions to manipulate data here
 
 /**
- * emojilib's structure uses an emoji as the key and lists of words as the values
- * this just restructures the data into word:emoji pairs for simpler matching later
- * @param {Object} data - The data structure containing word-to-value associations.
- * @returns {Map} - A Map object where words are keys and values are associated values.
+ * Emojilib's structure uses an emoji as a key and a list of words as the values
+ * Restructures the data into word:emoji pairs for simpler lookup later
+ * @param {Object} data - Key:value associations that we want to reverse
+ * @returns {Map} - A Map object with the original values as keys and the original keys as values
  */
 function buildReverseIndex(data) {
     const reverseIndex = {};

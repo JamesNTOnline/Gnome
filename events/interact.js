@@ -1,4 +1,6 @@
 const { Events } = require('discord.js');
+//todo refactor
+
 
 module.exports = {
     name: Events.InteractionCreate,
