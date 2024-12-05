@@ -1,4 +1,5 @@
 const { Events } = require('discord.js');
+const {connectDatabase} =  require('../db/connect-db.js');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
@@ -98,11 +99,14 @@ module.exports = {
     once: true,
     async execute(client) {
         console.log(`Startup successful! Logged in as ${client.user.tag}`);
+        console.log('Connecting to database...');
+        await connectDatabase();
+        console.log('Database connected.');
         setAvatar(client);
         setInterval(() => {
             setAvatar(client);
         }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-        //listening for terminal input for sending messages
+        //listening for terminal input for sending messages through the bot 
         startTerminalListener(client);
     }
 };

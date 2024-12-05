@@ -5,8 +5,7 @@ const mongoose = require('mongoose');
 async function connectDatabase(){
     try{
         await mongoose.connect('mongodb://localhost:27017/dankbot', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            //options
         });
         console.log('connected to database');
     } catch (error){
