@@ -55,6 +55,7 @@ async function actionFilteredMembers(commandName, interaction, filterFunction, a
     try {
         await interaction.reply(`Processing ${commandName}...`);
         const members = await interaction.guild.members.fetch();
+        console.log(`Total members fetched: ${members.size}`);
         const targetMembers = members.filter(filterFunction);
         const totalCount = targetMembers.size;
         let count = 0;
@@ -92,9 +93,13 @@ module.exports = {
 
     async execute(interaction) {
         const cmdName = interaction.options.getSubcommand();
+        console.log('Command Name:', cmdName);
         const botUserId = interaction.client.user.id;
+        console.log('Bot User ID:', botUserId);
         const memberUserId = interaction.member.user.id;
+        console.log('Member User ID:', memberUserId);
         const user_perms = interaction.member.permissions;
+        console.log('User Permissions:', user_perms.toArray());
         let filterCondition;
         if (user_perms.has(PermissionsBitField.Flags.Administrator)) {
             switch (cmdName) {
@@ -105,6 +110,7 @@ module.exports = {
                 case 'timeouts':
                     // An anonymous function to filter members based on timeout status
                     filterCondition = (member) => member.communicationDisabledUntilTimestamp > 0 && member.manageable;
+                    console.log('Filter Condition:', filterCondition);
                     actionFilteredMembers(cmdName, interaction, filterCondition, async (member) => {
                         try {
                             await member.timeout(null); //null removes timeout
@@ -119,7 +125,11 @@ module.exports = {
                         try {
                             await member.setNickname(null); //null removes nickname
                         } catch (err) {
-                            console.error(`Error setting nickname to null for member ${member.user.tag}:`, err);
+                            if (err.status === 429 || err.code === 429) {
+                                console.error('RATE LIMITED! Error details:', err);
+                            } else {
+                                console.error(`Error setting nickname to null for member ${member.user.tag}:`, err);
+                            }
                         }
                     });
                     break;

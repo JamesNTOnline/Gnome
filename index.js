@@ -91,8 +91,9 @@ processFiles(client, 'events', (client, event) => {
         client.on(event.name, (...args) => event.execute(...args));
     }
 });
+
 client.login(token); //finally, log in with the bot token
-console.log(client.commands);
+//console.log(client.commands);
 
 
 /**
