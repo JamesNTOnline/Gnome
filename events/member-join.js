@@ -16,6 +16,7 @@ async function welcomeMember(member) {
 module.exports = {
     name: Events.GuildMemberAdd,
     async execute(member) {
-            await welcomeMember(member);
+
+        await welcomeMember(member);
     },
 };

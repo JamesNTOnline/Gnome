@@ -10,9 +10,22 @@ Message event listener - what would you want to do with this?
 
 
 async function handleMessage(message) {
-    return;
-    //check something about the message, e.g. who sent it or something about the content
-    //try fetch whatever is needed, perform some action
+    // Auto-moderate user 742331554784608276
+    //if (
+    //    message.author.id === '' &&
+    //    (
+            //regex.test(message.content) ||
+            //message.mentions.users.has('')
+    //    )
+    //) {
+    //    try {
+    //        do something 
+    //    } catch (err) {
+    //        console.error('', err);
+    //    }
+    //    return;
+    //}
+    // ...other checks...
 }
 
 

@@ -56,7 +56,8 @@ module.exports = {
         await connectDatabase();
         console.log('Database connected.');
         console.log('Setting up avatar updater...');
-        rotateAvatar(client);
+        //rotateAvatar(client);
+        //avatar rotation disabled for now, seems to cause issues
         startTerminalListener(client);
     }
 };
