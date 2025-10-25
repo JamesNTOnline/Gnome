@@ -7,7 +7,7 @@
             {
                 "name": "kick",
                 "description": "Kicks a user; they can rejoin using an invite link",
-                "ctype": 1, 
+                "ctype": 1,
                 "options": [
                     {
                         "type": "USER",
@@ -48,10 +48,22 @@
                         "description": "The number of days' worth of messages to delete",
                         "required": true,
                         "choices": [
-                            {"name": "Don't delete any", "value": 0},
-                            {"name": "Last day", "value": 86400},
-                            {"name": "Last 3 days", "value": 259200},
-                            {"name": "Last 7 days", "value": 604800}
+                            {
+                                "name": "Don't delete any",
+                                "value": 0
+                            },
+                            {
+                                "name": "Last day",
+                                "value": 86400
+                            },
+                            {
+                                "name": "Last 3 days",
+                                "value": 259200
+                            },
+                            {
+                                "name": "Last 7 days",
+                                "value": 604800
+                            }
                         ],
                         "minValue": 0,
                         "maxValue": 604800
@@ -119,11 +131,26 @@
                         "description": "How many days the user should remain banned",
                         "required": true,
                         "choices": [
-                            { "name": "1 week", "value": 7 },
-                            { "name": "1 month", "value": 30 },
-                            { "name": "3 months", "value": 91 },
-                            { "name": "6 months", "value": 182 },
-                            { "name": "1 year", "value": 365 }
+                            {
+                                "name": "1 week",
+                                "value": 7
+                            },
+                            {
+                                "name": "1 month",
+                                "value": 30
+                            },
+                            {
+                                "name": "3 months",
+                                "value": 91
+                            },
+                            {
+                                "name": "6 months",
+                                "value": 182
+                            },
+                            {
+                                "name": "1 year",
+                                "value": 365
+                            }
                         ],
                         "minValue": 7,
                         "maxValue": 365
@@ -170,7 +197,6 @@
             }
         ]
     },
-
     {
         "name": "emoji",
         "description": "Commands to update and track emojis",
@@ -231,7 +257,6 @@
             }
         ]
     },
-
     {
         "name": "text",
         "description": "Commands which change the appearance or language of some text",
@@ -252,7 +277,7 @@
             },
             {
                 "name": "zoomer",
-                "description":"Makes ur msg bussin fr no cap",
+                "description": "Makes ur msg bussin fr no cap",
                 "options": [
                     {
                         "type": "TEXT",
@@ -336,7 +361,6 @@
             }
         ]
     },
-    
     {
         "name": "clear",
         "description": "Commands to tidy up the server and users",
@@ -400,6 +424,30 @@
                         "description": "The number of messages to delete",
                         "maxValue": 50,
                         "minValue": 1,
+                        "required": false
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "info",
+        "description": "Displays some information about something in the server",
+        "subcommands": [
+            {
+                "name": "postcount",
+                "description": "Gather message counts from specified channels and merge into messages_report.txt",
+                "options": [
+                    {
+                        "type": "TEXT",
+                        "name": "channels",
+                        "description": "Optional comma-separated list of channel IDs to process (uses defaults if omitted)",
+                        "required": false
+                    },
+                    {
+                        "type": "TEXT",
+                        "name": "cutoff",
+                        "description": "Optional cutoff date (ISO YYYY-MM-DD or relative like '2 months'); defaults to 2 months ago if omitted",
                         "required": false
                     }
                 ]
