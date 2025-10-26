@@ -1,0 +1,26 @@
+[
+    {
+        "name": "info",
+        "description": "Displays some information about something in the server",
+        "subcommands": [
+            {
+                "name": "postcount",
+                "description": "Gather message counts from specified channels and merge into messages_report.txt",
+                "options": [
+                    {
+                        "type": "TEXT",
+                        "name": "channels",
+                        "description": "Optional comma-separated list of channel IDs to process (uses defaults if omitted)",
+                        "required": false
+                    },
+                    {
+                        "type": "TEXT",
+                        "name": "cutoff",
+                        "description": "Optional cutoff date (ISO YYYY-MM-DD or relative like '2 months'); defaults to 2 months ago if omitted",
+                        "required": false
+                    }
+                ]
+            }
+        ]
+    }
+]
