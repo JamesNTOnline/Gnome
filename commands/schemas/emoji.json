@@ -1,0 +1,62 @@
+[
+    {
+        "name": "emoji",
+        "description": "Commands to update and track emojis",
+        "subcommands": [
+            {
+                "name": "display",
+                "description": "Displays an emoji in a larger size",
+                "options": [
+                    {
+                        "type": "TEXT",
+                        "name": "emoji",
+                        "description": "The emoji to display",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "add",
+                "description": "Adds an emoji to the server",
+                "options": [
+                    {
+                        "type": "ATTACHMENT",
+                        "name": "attachment",
+                        "description": "An image file to turn into an emoji",
+                        "required": false
+                    },
+                    {
+                        "type": "TEXT",
+                        "name": "url",
+                        "description": "The URL of the emoji",
+                        "required": false
+                    }
+                ]
+            },
+            {
+                "name": "delete",
+                "description": "Removes an emoji from the emoji list",
+                "options": [
+                    {
+                        "type": "TEXT",
+                        "name": "emoji",
+                        "description": "The emoji to be deleted",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "info",
+                "description": "Displays information about an emoji",
+                "options": [
+                    {
+                        "type": "TEXT",
+                        "name": "emoji",
+                        "description": "The emoji to get information about",
+                        "required": true
+                    }
+                ]
+            }
+        ]
+    }
+]

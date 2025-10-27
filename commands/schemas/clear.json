@@ -1,0 +1,71 @@
+[
+    {
+        "name": "clear",
+        "description": "Commands to tidy up the server and users",
+        "subcommands": [
+            {
+                "name": "timeouts",
+                "description": "Cancels all of the active timeouts",
+                "options": []
+            },
+            {
+                "name": "nicknames",
+                "description": "Clears all nicknames from server members",
+                "options": []
+            },
+            {
+                "name": "bans",
+                "description": "Empties the ban list",
+                "options": []
+            },
+            {
+                "name": "role",
+                "description": "Removes a specified role from any users who have it",
+                "options": [
+                    {
+                        "type": "ROLE",
+                        "name": "role",
+                        "description": "The role to remove from all members",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "reactions",
+                "description": "Removes reactions from recent posts",
+                "options": []
+            },
+            {
+                "name": "bot",
+                "description": "Cleans up messages posted by the bot",
+                "options": []
+            },
+            {
+                "name": "user",
+                "description": "Deletes recent messages from a specified user",
+                "options": [
+                    {
+                        "type": "USER",
+                        "name": "target",
+                        "description": "The @mention or 18-digit ID of a user",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "all",
+                "description": "Deletes a number of messages (default 5) from all users",
+                "options": [
+                    {
+                        "type": "INTEGER",
+                        "name": "amount",
+                        "description": "The number of messages to delete",
+                        "maxValue": 50,
+                        "minValue": 1,
+                        "required": false
+                    }
+                ]
+            }
+        ]
+    }
+]
