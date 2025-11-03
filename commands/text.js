@@ -10,93 +10,11 @@ const allCommands = require('../utilities/sub-command-builder.js');
 //"fonts", characters, and translations
 const {translate: bingTranslate, lang} = require('bing-translate-api');
 const langChoices = Object.values(lang.LANGS).filter(value => value !== 'Auto-detect');
-const styles = require('../utilities/text-styles.json'); //alternate character appearance data
-const vocabulary = require('../utilities/phrases.json'); //slang translation data
 const emojiWords = require('emojilib'); 
-wordEmojis = buildReverseIndex(emojiWords); 
-console.log(langChoices);
-
-
-/**
- * Matches phrases in the input text.
- * Why not tokenize the sentence and go word by word? Some of the phrases to match keys in the vocab
- * are multiple words: "see you later": "selongabye",
- * @param {string} text - The input text to be processed.
- * @param {string} translationKey - The key used to access the translation data from the vocabulary.
- * @param {boolean} allowPartials - A flag to indicate whether partially matching an input word is allowed.
- * @returns {string} The text with replacements.
- */
-function replacePhrasesInText(text, translationKey, allowPartials = false) {
-    const wordData = vocabulary[translationKey];
-    let pattern;
-    if (!wordData) {
-        throw new Error (`No "${translationKey}" phrases are available`);
-    }
-    let translatedText = text;
-    if(allowPartials){
-        pattern = new RegExp(Object.keys(wordData).join('|'), 'gi');
-    } else {
-        pattern = new RegExp(Object.keys(wordData).map(phrase => `\\b${phrase}\\b`).join('|'), 'gi');
-    }
-        // Replace matched phrases
-    translatedText = translatedText.replace(pattern, match => {
-        // Get the translation from the wordData, or return the original match if not found
-        const translation = wordData[match.toLowerCase()] || match;
-        // Apply the original capitalization to the translation
-        return applyCasing(match, translation);
-    });
-
-    return translatedText;
-}
-
-
-function applyCasing(original, replacement) {
-    // optimisaiton - look if the original word is all caps or all lower case first
-    original = original.replace(/[^a-zA-Z]/g, ''); //get rid of non-letters because they cause problems
-    const isUpper = original === original.toUpperCase();
-    const isLower = original === original.toLowerCase();
-
-    if (original.length > 1 && isUpper) { //exclude single letter replacements so the output isn't all caps.
-        return replacement.toUpperCase();
-    } else if (isLower) {
-        return replacement.toLowerCase();
-    } else { //have to build the word with capitalisations
-        let result = '';
-        for (let i = 0; i < replacement.length; i++) { // go over the output characters
-            const replaceChar = replacement[i];
-            if (i < original.length && original[i] === original[i].toUpperCase()) {
-                result += replaceChar.toUpperCase();
-            } else {
-                result += replaceChar;
-            }
-        }
-        return result;
-    }
-}
-
-
-function replaceWordEndings(text, translationKey) {
-    const customReplacements = vocabulary.endings[translationKey];
-    if (!customReplacements) {
-        throw new Error(`No "${translationKey}" word endings available`);
-    }
-    let modifiedText = text;
-    for (const [endingToReplace, replacement] of Object.entries(customReplacements)) {
-        const regex = new RegExp(`${endingToReplace}\\b`, 'gi');
-        modifiedText = modifiedText.replace(regex, replacement);
-    }
-    return modifiedText;
-}
-
-
-function applyStyleToText(text, styleName) {
-    if (!styles[styleName]) {
-        throw new Error('This style is not available');
-    }
-    const styleMap = styles[styleName];
-    const stylizedText = text.replace(/./g, (char) => styleMap[char] || char);
-    return stylizedText;
-}
+const wordEmojis = buildReverseIndex(emojiWords); 
+const { replacePhrasesInText, replaceWordEndings } = require('.utilities/text-processor.js');
+const { applyStyleToText } = require('./utilities/text-processor.js');
+//console.log(langChoices);
 
 
 module.exports = { //exports data in Node.js so it can be require()d in other files
