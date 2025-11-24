@@ -188,11 +188,22 @@ module.exports = {
                         interaction.reply('Invalid ID - user may not be in this server');
                         break;
                     }
-                    //tell the member what happened (wont be received if bot is blocked. no way around this!)
-                    await target.send(`You were kicked from ${interaction.guild.name} for: ${reason}`);
-                    await interaction.guild.members.kick(target, reason)
+                    // send DM (don't let DM failure stop the kick), then kick, then reply — using promise .then/.catch style
+                    target.send(`You were kicked from ${interaction.guild.name} for: ${reason}`)
+                        .catch(dmErr => {
+                            if (dmErr?.code === 50007) {
+                                console.warn(`Could not DM ${target.tag || target.id} before kick (DMs closed). Continuing.`);
+                            } else {
+                                console.error('Unexpected error sending DM:', dmErr);
+                            }
+                            // swallow DM errors so the chain continues
+                        })
+                        .then(() => interaction.guild.members.kick(target, reason))
                         .then(() => {
-                            interaction.reply(`**Kicked:** <@${target.id}>`);
+                            if (interaction.replied || interaction.deferred) {
+                                return interaction.editReply(`**Kicked:** <@${target.id}>`);
+                            }
+                            return interaction.reply(`**Kicked:** <@${target.id}>`);
                         })
                         .catch(err => {
                             handleError(interaction, target, err);

@@ -1,200 +1,198 @@
-[
-    {
-        "name": "mod",
-        "description": "Commands to remove bad users",
-        "ctype": 1,
-        "subcommands": [
-            {
-                "name": "kick",
-                "description": "Kicks a user; they can rejoin using an invite link",
-                "ctype": 1,
-                "options": [
-                    {
-                        "type": "USER",
-                        "name": "target",
-                        "description": "The @ or 18-digit ID of a user",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the kick",
-                        "ctype": 3,
-                        "required": false,
-                        "maxLength": 512
-                    }
-                ]
-            },
-            {
-                "name": "ban",
-                "description": "Bans a user; they wont be able to rejoin",
-                "options": [
-                    {
-                        "type": "USER",
-                        "name": "target",
-                        "description": "The @ or 18-digit ID of a user",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the ban",
-                        "required": true,
-                        "maxLength": 512
-                    },
-                    {
-                        "type": "INTEGER",
-                        "name": "delete",
-                        "description": "The number of days' worth of messages to delete",
-                        "required": true,
-                        "choices": [
-                            {
-                                "name": "Don't delete any",
-                                "value": 0
-                            },
-                            {
-                                "name": "Last day",
-                                "value": 86400
-                            },
-                            {
-                                "name": "Last 3 days",
-                                "value": 259200
-                            },
-                            {
-                                "name": "Last 7 days",
-                                "value": 604800
-                            }
-                        ],
-                        "minValue": 0,
-                        "maxValue": 604800
-                    }
-                ]
-            },
-            {
-                "name": "unban",
-                "description": "Undoes a previous ban",
-                "options": [
-                    {
-                        "type": "USER",
-                        "name": "target",
-                        "description": "The @ or 18-digit ID of a user",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the unban",
-                        "required": false,
-                        "maxLength": 512
-                    }
-                ]
-            },
-            {
-                "name": "editban",
-                "description": "Updates the reason a user was banned",
-                "options": [
-                    {
-                        "type": "USER",
-                        "name": "target",
-                        "description": "The @ or 18-digit ID of a user",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the edit",
-                        "required": true,
-                        "maxLength": 512
-                    }
-                ]
-            },
-            {
-                "name": "tempban",
-                "description": "Sets a ban which expires automatically",
-                "options": [
-                    {
-                        "type": "USER",
-                        "name": "target",
-                        "description": "The @ or 18-digit ID of a user",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the temporary ban",
-                        "required": true,
-                        "maxLength": 512
-                    },
-                    {
-                        "type": "INTEGER",
-                        "name": "length",
-                        "description": "How many days the user should remain banned",
-                        "required": true,
-                        "choices": [
-                            {
-                                "name": "1 week",
-                                "value": 7
-                            },
-                            {
-                                "name": "1 month",
-                                "value": 30
-                            },
-                            {
-                                "name": "3 months",
-                                "value": 91
-                            },
-                            {
-                                "name": "6 months",
-                                "value": 182
-                            },
-                            {
-                                "name": "1 year",
-                                "value": 365
-                            }
-                        ],
-                        "minValue": 7,
-                        "maxValue": 365
-                    }
-                ]
-            },
-            {
-                "name": "softban",
-                "description": "Bans then unbans a user; purges their messages",
-                "options": [
-                    {
-                        "type": "USER",
-                        "name": "target",
-                        "description": "The @ or 18-digit ID of a user",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the soft ban",
-                        "required": false,
-                        "maxLength": 512
-                    }
-                ]
-            },
-            {
-                "name": "masskick",
-                "description": "Kicks up to five users at once",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "targets",
-                        "description": "A list of users by @ or 18-digit IDs",
-                        "required": true
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "reason",
-                        "description": "Explanation for the kick (applies to all users in the log)",
-                        "required": true,
-                        "maxLength": 512
-                    }
-                ]
-            }
-        ]
-    }
-]
+{
+    "name": "mod",
+    "description": "Commands to remove bad users",
+    "ctype": 1,
+    "subcommands": [
+        {
+            "name": "kick",
+            "description": "Kicks a user; they can rejoin using an invite link",
+            "ctype": 1,
+            "options": [
+                {
+                    "type": "USER",
+                    "name": "target",
+                    "description": "The @ or 18-digit ID of a user",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the kick",
+                    "ctype": 3,
+                    "required": false,
+                    "maxLength": 512
+                }
+            ]
+        },
+        {
+            "name": "ban",
+            "description": "Bans a user; they wont be able to rejoin",
+            "options": [
+                {
+                    "type": "USER",
+                    "name": "target",
+                    "description": "The @ or 18-digit ID of a user",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the ban",
+                    "required": true,
+                    "maxLength": 512
+                },
+                {
+                    "type": "INTEGER",
+                    "name": "delete",
+                    "description": "The number of days' worth of messages to delete",
+                    "required": true,
+                    "choices": [
+                        {
+                            "name": "Don't delete any",
+                            "value": 0
+                        },
+                        {
+                            "name": "Last day",
+                            "value": 86400
+                        },
+                        {
+                            "name": "Last 3 days",
+                            "value": 259200
+                        },
+                        {
+                            "name": "Last 7 days",
+                            "value": 604800
+                        }
+                    ],
+                    "minValue": 0,
+                    "maxValue": 604800
+                }
+            ]
+        },
+        {
+            "name": "unban",
+            "description": "Undoes a previous ban",
+            "options": [
+                {
+                    "type": "USER",
+                    "name": "target",
+                    "description": "The @ or 18-digit ID of a user",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the unban",
+                    "required": false,
+                    "maxLength": 512
+                }
+            ]
+        },
+        {
+            "name": "editban",
+            "description": "Updates the reason a user was banned",
+            "options": [
+                {
+                    "type": "USER",
+                    "name": "target",
+                    "description": "The @ or 18-digit ID of a user",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the edit",
+                    "required": true,
+                    "maxLength": 512
+                }
+            ]
+        },
+        {
+            "name": "tempban",
+            "description": "Sets a ban which expires automatically",
+            "options": [
+                {
+                    "type": "USER",
+                    "name": "target",
+                    "description": "The @ or 18-digit ID of a user",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the temporary ban",
+                    "required": true,
+                    "maxLength": 512
+                },
+                {
+                    "type": "INTEGER",
+                    "name": "length",
+                    "description": "How many days the user should remain banned",
+                    "required": true,
+                    "choices": [
+                        {
+                            "name": "1 week",
+                            "value": 7
+                        },
+                        {
+                            "name": "1 month",
+                            "value": 30
+                        },
+                        {
+                            "name": "3 months",
+                            "value": 91
+                        },
+                        {
+                            "name": "6 months",
+                            "value": 182
+                        },
+                        {
+                            "name": "1 year",
+                            "value": 365
+                        }
+                    ],
+                    "minValue": 7,
+                    "maxValue": 365
+                }
+            ]
+        },
+        {
+            "name": "softban",
+            "description": "Bans then unbans a user; purges their messages",
+            "options": [
+                {
+                    "type": "USER",
+                    "name": "target",
+                    "description": "The @ or 18-digit ID of a user",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the soft ban",
+                    "required": false,
+                    "maxLength": 512
+                }
+            ]
+        },
+        {
+            "name": "masskick",
+            "description": "Kicks up to five users at once",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "targets",
+                    "description": "A list of users by @ or 18-digit IDs",
+                    "required": true
+                },
+                {
+                    "type": "TEXT",
+                    "name": "reason",
+                    "description": "Explanation for the kick (applies to all users in the log)",
+                    "required": true,
+                    "maxLength": 512
+                }
+            ]
+        }
+    ]
+}

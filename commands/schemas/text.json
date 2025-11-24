@@ -1,106 +1,104 @@
-[
-    {
-        "name": "text",
-        "description": "Commands which change the appearance or language of some text",
-        "subcommands": [
-            {
-                "name": "jarjar",
-                "description": "Meesa translate da message into Gungan, bombad",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "text",
-                        "description": "The text you want to do stuff with",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 1250
-                    }
-                ]
-            },
-            {
-                "name": "zoomer",
-                "description": "Makes ur msg bussin fr no cap",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "text",
-                        "description": "The text you want to do stuff with",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 1250
-                    }
-                ]
-            },
-            {
-                "name": "translate",
-                "description": "Tries to translate your message from one language to another",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "text",
-                        "description": "The text you want to do stuff with",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 1250
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "language",
-                        "description": "What language to output",
-                        "required": true,
-                        "autocomplete": true
-                    }
-                ]
-            },
-            {
-                "name": "emojify",
-                "description": "Decorates a message with some emojis",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "text",
-                        "description": "The text you want to do stuff with",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 1250
-                    }
-                ]
-            },
-            {
-                "name": "clap",
-                "description": "Adds some sassy claps to a message",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "text",
-                        "description": "The text you want to do stuff with",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 1250
-                    }
-                ]
-            },
-            {
-                "name": "aesthetic",
-                "description": "𝓒𝓱𝓪𝓷𝓰𝓮𝓼 𝕥𝕙𝕖 卂卩卩乇卂尺卂几匚乇 Ø₣ ₳ ๓ēŞŞคງe",
-                "options": [
-                    {
-                        "type": "TEXT",
-                        "name": "text",
-                        "description": "The text you want to do stuff with",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 1250
-                    },
-                    {
-                        "type": "TEXT",
-                        "name": "style",
-                        "description": "Select an option from the list",
-                        "required": true,
-                        "choices": []
-                    }
-                ]
-            }
-        ]
-    }
-]
+{
+    "name": "text",
+    "description": "Commands which change the appearance or language of some text",
+    "subcommands": [
+        {
+            "name": "jarjar",
+            "description": "Meesa translate da message into Gungan, bombad",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "text",
+                    "description": "The text you want to do stuff with",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 1250
+                }
+            ]
+        },
+        {
+            "name": "zoomer",
+            "description": "Makes ur msg bussin fr no cap",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "text",
+                    "description": "The text you want to do stuff with",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 1250
+                }
+            ]
+        },
+        {
+            "name": "translate",
+            "description": "Tries to translate your message from one language to another",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "text",
+                    "description": "The text you want to do stuff with",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 1250
+                },
+                {
+                    "type": "TEXT",
+                    "name": "language",
+                    "description": "What language to output",
+                    "required": true,
+                    "autocomplete": true
+                }
+            ]
+        },
+        {
+            "name": "emojify",
+            "description": "Decorates a message with some emojis",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "text",
+                    "description": "The text you want to do stuff with",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 1250
+                }
+            ]
+        },
+        {
+            "name": "clap",
+            "description": "Adds some sassy claps to a message",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "text",
+                    "description": "The text you want to do stuff with",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 1250
+                }
+            ]
+        },
+        {
+            "name": "aesthetic",
+            "description": "𝓒𝓱𝓪𝓷𝓰𝓮𝓼 𝕥𝕙𝕖 卂卩卩乇卂尺卂几匚乇 Ø₣ ₳ ๓ēŞŞคງe",
+            "options": [
+                {
+                    "type": "TEXT",
+                    "name": "text",
+                    "description": "The text you want to do stuff with",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 1250
+                },
+                {
+                    "type": "TEXT",
+                    "name": "style",
+                    "description": "Select an option from the list",
+                    "required": true,
+                    "choices": []
+                }
+            ]
+        }
+    ]
+}
