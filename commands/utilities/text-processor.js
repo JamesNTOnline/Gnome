@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const stylesPath = path.join(__dirname, 'text-styles.json');
 const styles = fs.existsSync(stylesPath) ? JSON.parse(fs.readFileSync(stylesPath, 'utf8')) : {};
-const vocabulary = require('../utilities/phrases.json'); //slang translation data
+const vocabulary = require('../../utilities/phrases.json'); //slang translation data
 
 /**
  * small helper to load up the text styles JSON file

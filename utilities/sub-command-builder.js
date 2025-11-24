@@ -1,4 +1,5 @@
 const fs = require('fs'); 
+const path = require('path');
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.js");
 
 
@@ -24,8 +25,38 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.
  *                    the subcommands can thus be accessed (and modified) individually later if needed.
  */
 function buildCommandsFromJson() {
-    const commandsJson = fs.readFileSync('commands.json', 'utf-8'); //get the command definitions
-    const commandsData = JSON.parse(commandsJson);
+    //look for and read files in the command schemas directory
+    const schemasDir = path.resolve(__dirname, '..', 'commands', 'schemas');
+    if (!fs.existsSync(schemasDir) || !fs.statSync(schemasDir).isDirectory()) {
+        throw new Error(`no command schemas found. Expected JSON files under ${schemasDir}`);
+    }
+    const files = fs.readdirSync(schemasDir).filter(f => f.endsWith('.json'));
+    if (files.length === 0) {
+        throw new Error(`no .json files found in ${schemasDir}`);
+    }
+    // build a combined list of all command categories from all JSON files
+    const commandsData = [];
+    for (const file of files) {
+        const full = path.join(schemasDir, file);
+        try {
+            const raw = fs.readFileSync(full, 'utf8');
+            if (!raw || !raw.trim()) {
+                console.warn(`Skipping empty schema file: ${file}`);
+                continue; // skip empty files
+            }
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) commandsData.push(...parsed);
+            else commandsData.push(parsed);
+        } catch (err) {
+            console.error(`failed to read/parse ${file}:`, err);
+            // continue on error rather than aborting the whole build
+            continue;
+        }
+    }
+
+    if (commandsData.length === 0) {
+        throw new Error(`no valid schemas found under ${schemasDir}`);
+    }
     const commands = {}; //list of root commands
 
     commandsData.forEach(category => {
@@ -82,12 +113,6 @@ function buildCommandsFromJson() {
 
     return commands;
 }
-
-
-//         return subcommands;
-//     }
-//     throw new Error(`Category ${categoryName} not found in JSON`);
-// }
 
 
 /**

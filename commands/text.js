@@ -12,8 +12,7 @@ const {translate: bingTranslate, lang} = require('bing-translate-api');
 const langChoices = Object.values(lang.LANGS).filter(value => value !== 'Auto-detect');
 const emojiWords = require('emojilib'); 
 const wordEmojis = buildReverseIndex(emojiWords); 
-const { replacePhrasesInText, replaceWordEndings } = require('.utilities/text-processor.js');
-const { applyStyleToText } = require('./utilities/text-processor.js');
+const { replacePhrasesInText, replaceWordEndings, applyStyleToText} = require('./utilities/text-processor.js');
 //console.log(langChoices);
 
 

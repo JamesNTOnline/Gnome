@@ -5,18 +5,18 @@
         "subcommands": [
             {
                 "name": "postcount",
-                "description": "Gather message counts from specified channels and merge into messages_report.txt",
+                "description": "Gather message counts from specified channels and create a report",
                 "options": [
                     {
                         "type": "TEXT",
                         "name": "channels",
-                        "description": "Optional comma-separated list of channel IDs to process (uses defaults if omitted)",
+                        "description": "comma-separated list of channel IDs to process (uses current if omitted)",
                         "required": false
                     },
                     {
                         "type": "TEXT",
                         "name": "cutoff",
-                        "description": "Optional cutoff date (ISO YYYY-MM-DD or relative like '2 months'); defaults to 2 months ago if omitted",
+                        "description": "Optional cutoff date as YYYY-MM-DD or relative; default 2 months",
                         "required": false
                     }
                 ]
