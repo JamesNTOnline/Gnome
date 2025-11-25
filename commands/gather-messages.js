@@ -25,7 +25,7 @@ module.exports = {
         // Supply only the channels you want to process this run:
         //TODO: allow user to set channels via command options
         const channelIds = [
-            // e.g. 'YOUR_GYM_CHANNEL_ID'
+            '1216698620984954911'
         ];
 
         await interaction.reply('Starting message gathering and merging...');

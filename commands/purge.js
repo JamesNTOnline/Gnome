@@ -22,7 +22,7 @@ module.exports = {
         .setDescription('purge in progress...'),
     async execute(interaction) {
         // Set your role ID here:
-        const roleId = '';
+        const roleId = '1216736768229904404';
 
         await interaction.reply('purge in progress...');
 
